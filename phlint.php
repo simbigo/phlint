@@ -13,6 +13,7 @@ spl_autoload_register(function ($className) {
     }
 });
 
+mb_internal_encoding('UTF-8');
 $exit = false;
 $lexer = new Lexer();
 $interpreter = new Interpreter($lexer);
