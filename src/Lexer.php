@@ -25,7 +25,7 @@ class Lexer
      * @return bool
      */
 
-    private function endOfSource() : bool
+    private function endOfSource(): bool
     {
         return $this->currentChar === null;
     }
@@ -70,7 +70,7 @@ class Lexer
      * @param string $char
      * @return bool
      */
-    private function isWhitespace(string $char) : bool
+    private function isWhitespace(string $char): bool
     {
         return in_array($char, [' ', "\r", "\n", "\t"], true);
     }
@@ -80,7 +80,7 @@ class Lexer
      * @param $value
      * @return Token
      */
-    private function makeToken(int $tokenType, $value) : Token
+    private function makeToken(int $tokenType, $value): Token
     {
         return new Token($tokenType, $value);
     }
@@ -99,12 +99,26 @@ class Lexer
     }
 
     /**
+     *
+     */
+    private function skipWhitespace()
+    {
+        while (!$this->endOfSource() && $this->isWhitespace($this->currentChar)) {
+            $this->readChar();
+        }
+    }
+
+    /**
      * @return Token
      */
     public function getNextToken(): Token
     {
         while (!$this->endOfSource()) {
             $this->readChar();
+
+            if ($this->isWhitespace($this->currentChar)) {
+                $this->skipWhitespace();
+            }
 
             if ($this->isDigit($this->currentChar)) {
                 return $this->makeToken(TokenType::T_INTEGER, (int)$this->currentChar);
