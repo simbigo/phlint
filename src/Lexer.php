@@ -121,7 +121,7 @@ class Lexer
             }
 
             if ($this->isDigit($this->currentChar)) {
-                return $this->makeToken(TokenType::T_INTEGER, (int)$this->currentChar);
+                return $this->makeToken(TokenType::T_INTEGER, $this->readInteger());
             }
             if ($this->currentChar === '+') {
                 return $this->makeToken(TokenType::T_PLUS, '+');
@@ -151,4 +151,18 @@ class Lexer
         $this->currentChar = '';
         $this->pos = -1;
     }
+
+    /**
+     * @return int
+     */
+    private function readInteger()
+    {
+        $result = '';
+        while (!$this->endOfSource() && $this->isDigit($this->currentChar)) {
+            $result .= $this->currentChar;
+            $this->readChar();
+        }
+        return (int)$result;
+    }
+
 }
