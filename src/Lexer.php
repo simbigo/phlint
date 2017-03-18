@@ -17,11 +17,19 @@ class Lexer
     /**
      * @var int
      */
+    private $line;
+    /**
+     * @var int
+     */
+    private $linePos;
+    /**
+     * @var int
+     */
     private $pos;
     /**
      * @var string
      */
-    private $text;
+    private $source;
 
     /**
      * @return bool
@@ -46,6 +54,15 @@ class Lexer
         if ($appendInfo) {
             $message .= ' in position ' . $this->pos . '.';
         }
+
+        $lines = explode("\n", $this->source);
+        $line = $lines[$this->line];
+
+        $message .= 'Invalid character "' . $this->currentChar . '"' . PHP_EOL;
+        $message .= 'Line: ' . ($this->line + 1) . PHP_EOL;
+        $message .= 'Position: ' . $this->linePos . PHP_EOL . PHP_EOL;
+        $message .= $line . PHP_EOL;
+        $message .= str_repeat(' ', $this->linePos) . '^';
 
         throw new ParseError($message);
     }
@@ -75,7 +92,7 @@ class Lexer
      */
     private function makeToken(int $tokenType, $value): Token
     {
-        return new Token($tokenType, $value);
+        return new Token($tokenType, $this->line, $this->linePos, $value);
     }
 
     /**
@@ -84,17 +101,21 @@ class Lexer
     private function readChar()
     {
         $this->pos++;
-        if ($this->pos > mb_strlen($this->text) - 1) {
+        $this->linePos++;
+        if ($this->pos > mb_strlen($this->source) - 1) {
             $this->currentChar = null;
         } else {
-            $this->currentChar = mb_substr($this->text, $this->pos, 1);
+            $this->currentChar = mb_substr($this->source, $this->pos, 1);
+        }
+
+        if ($this->currentChar === "\n") {
+            $this->line++;
+            $this->linePos = 0;
         }
     }
 
     /**
-
      * @return float
-
      */
 
     private function readNumber()
@@ -173,13 +194,26 @@ class Lexer
     }
 
     /**
-     * @param $text
+     * @param string $source
+     * @return Token[]
      */
-    public function setText(string $text)
+    public function tokenize(string $source)
     {
-        $this->text = $text;
+        $this->source = $source;
         $this->pos = -1;
+        $this->line = 0;
+        $this->linePos = -1;
         $this->readChar();
-    }
 
+
+        $tokens = [];
+        $token = $this->getNextToken();
+        while (!$token->is(TokenType::T_EOF)) {
+            $tokens[] = $token;
+            $token = $this->getNextToken();
+        }
+        $tokens[] = $token;
+
+        return $tokens;
+    }
 }

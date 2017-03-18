@@ -1,8 +1,8 @@
 <?php
 
-use Simbigo\Phlint\Exceptions\ParseError;
 use Simbigo\Phlint\Interpreter;
 use Simbigo\Phlint\Lexer;
+use Simbigo\Phlint\Parser;
 use Simbigo\Phlint\Phlint;
 
 spl_autoload_register(function ($className) {
@@ -13,41 +13,7 @@ spl_autoload_register(function ($className) {
         require $classPath;
     }
 });
-
-$phlint = new Phlint();
-
-
-$exit = false;
-$lexer = new Lexer();
-$interpreter = new Interpreter($lexer);
-
-if ($argc > 1) {
-    $exit = true;
-    $file = $argv[1];
-    $code = file_get_contents($file);
-    try {
-        echo $interpreter->evaluate($code) . PHP_EOL;
-    } catch (ParseError $e) {
-        echo $e->getMessage() . PHP_EOL;
-        exit($e->getCode());
-    }
-    exit(0);
-}
-
-while (!$exit) {
-    echo '[phlint]: ';
-
-    $code = trim(fgets(STDIN));
-    if ($code === 'exit' || $code === 'quit') {
-        $exit = true;
-    } else {
-        try {
-            echo $interpreter->evaluate($code) . PHP_EOL;
-        } catch (ParseError $e) {
-            echo $e->getMessage() . PHP_EOL;
-            exit($e->getCode());
-        }
-    }
-}
-
-exit(0);
+$phlint = new Phlint(new Interpreter(), new Parser(), new Lexer());
+array_shift($argv);
+$exitCode = $phlint->run($argv);
+exit($exitCode);

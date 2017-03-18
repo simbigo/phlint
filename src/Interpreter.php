@@ -2,117 +2,74 @@
 
 namespace Simbigo\Phlint;
 
-use Simbigo\Phlint\Exceptions\SyntaxError;
-use Simbigo\Phlint\Tokens\Token;
+use Simbigo\Phlint\AST\ASTNode;
+use Simbigo\Phlint\AST\BinaryOperation;
+use Simbigo\Phlint\AST\Number;
+use Simbigo\Phlint\Exceptions\InternalError;
 use Simbigo\Phlint\Tokens\TokenType;
 
+/**
+ * Class Interpreter
+ */
 class Interpreter
 {
     /**
-     * @var Token
+     * @param BinaryOperation $node
+     * @return float|int|mixed
+     * @throws InternalError
      */
-    private $currentToken;
-    /**
-     * @var Lexer
-     */
-    private $lexer;
-
-    /**
-     * Interpreter constructor.
-     *
-     * @param Lexer $lexer
-     */
-    public function __construct(Lexer $lexer)
+    private function visitBinaryOperationNode(BinaryOperation $node)
     {
-        $this->lexer = $lexer;
-    }
-
-    /**
-     * @param $message
-     * @throws SyntaxError
-     */
-    private function error($message = '')
-    {
-        throw new SyntaxError(trim('Invalid syntax. ' . $message));
-    }
-
-    /**
-     *
-     */
-    private function factor()
-    {
-        $token = $this->currentToken;
-        $this->pickUp(TokenType::T_NUMBER);
-        return $token->getValue();
-    }
-
-    private function pickUp($tokenType)
-    {
-        if ($this->currentToken->is($tokenType)) {
-            $this->currentToken = $this->lexer->getNextToken();
-        } else {
-            $this->error();
-        }
-    }
-
-    /**
-     * @return mixed
-     */
-    private function term()
-    {
-        $result = $this->factor();
-
-        $operators = [
-            TokenType::T_MUL,
-            TokenType::T_DIV
-        ];
-
-        while (in_array($this->currentToken->getType(), $operators, true)) {
-            $token = $this->currentToken;
-            if ($token->is(TokenType::T_MUL)) {
-                $this->pickUp(TokenType::T_MUL);
-                $result *= $this->factor();
-            } elseif ($token->is(TokenType::T_DIV)) {
-                $this->pickUp(TokenType::T_DIV);
-                $result /= $this->factor();
-            }
+        $operation = $node->getOperation();
+        if ($operation->is(TokenType::T_PLUS)) {
+            return $this->visitNode($node->getLeftArg()) + $this->visitNode($node->getRightArg());
+        } elseif ($operation->is(TokenType::T_MINUS)) {
+            return $this->visitNode($node->getLeftArg()) - $this->visitNode($node->getRightArg());
+        } elseif ($operation->is(TokenType::T_MUL)) {
+            return $this->visitNode($node->getLeftArg()) * $this->visitNode($node->getRightArg());
+        } elseif ($operation->is(TokenType::T_DIV)) {
+            return $this->visitNode($node->getLeftArg()) / $this->visitNode($node->getRightArg());
         }
 
-        return $result;
+        $message = 'Unknown token type: ' . $operation->getType() . PHP_EOL;
+        $message .= 'Line: ' . $operation->getLine() . PHP_EOL;
+        $message .= 'Position: ' . $operation->getPos() . PHP_EOL;
+        $message .= 'Value: ' . $operation->getValue();
+        throw new InternalError($message);
     }
 
     /**
-     * @return mixed
+     * @param ASTNode|BinaryOperation|Number $node
+     * @return float|int|mixed
+     * @throws InternalError
      */
-    private function expression()
+    private function visitNode(ASTNode $node)
     {
-        $this->currentToken = $this->lexer->getNextToken();
-        $result = $this->term();
-
-        $operators = [
-            TokenType::T_PLUS,
-            TokenType::T_MINUS
-        ];
-
-        while (in_array($this->currentToken->getType(), $operators, true)) {
-            if ($this->currentToken->is(TokenType::T_PLUS)) {
-                $this->pickUp(TokenType::T_PLUS);
-                $result += $this->term();
-            } elseif ($this->currentToken->is(TokenType::T_MINUS)) {
-                $this->pickUp(TokenType::T_MINUS);
-                $result -= $this->term();
-            }
+        if ($node instanceof BinaryOperation) {
+            return $this->visitBinaryOperationNode($node);
+        } elseif ($node instanceof Number) {
+            return $this->visitNumberNode($node);
         }
-        return $result;
+
+        throw new InternalError('Unknown node type: ' . get_class($node));
     }
 
     /**
-     * @param $text
-     * @return mixed
+     * @param Number $node
+     * @return int|float
      */
-    public function evaluate($text)
+    private function visitNumberNode(Number $node)
     {
-        $this->lexer->setText($text);
-        return $this->expression();
+        return $node->getValue()->getValue();
+    }
+
+    /**
+     * @param ASTNode[] $statements
+     */
+    public function evaluate(array $statements)
+    {
+        foreach ($statements as $statement) {
+            echo $this->visitNode($statement) . PHP_EOL;
+        }
     }
 }
