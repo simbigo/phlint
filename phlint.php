@@ -3,6 +3,7 @@
 use Simbigo\Phlint\Exceptions\ParseError;
 use Simbigo\Phlint\Interpreter;
 use Simbigo\Phlint\Lexer;
+use Simbigo\Phlint\Phlint;
 
 spl_autoload_register(function ($className) {
     $classPath = str_replace('Simbigo\Phlint\\', __DIR__ . '/src/', $className);
@@ -13,7 +14,9 @@ spl_autoload_register(function ($className) {
     }
 });
 
-mb_internal_encoding('UTF-8');
+$phlint = new Phlint();
+
+
 $exit = false;
 $lexer = new Lexer();
 $interpreter = new Interpreter($lexer);

@@ -8,6 +8,8 @@ use Simbigo\Phlint\Tokens\TokenType;
 
 class Lexer
 {
+    const FLOAT_POINTER = '.';
+
     /**
      * @var string
      */
@@ -90,16 +92,29 @@ class Lexer
     }
 
     /**
-     * @return int
+
+     * @return float
+
      */
-    private function readInteger()
+
+    private function readNumber()
     {
+        $hasPointer = false;
         $result = '';
-        while (!$this->endOfSource() && $this->isDigit($this->currentChar)) {
+        while (!$this->endOfSource() && ($this->isDigit($this->currentChar) || $this->currentChar === self::FLOAT_POINTER)) {
+            if ($this->currentChar === self::FLOAT_POINTER) {
+                if ($hasPointer) {
+                    $this->error('Invalid character "' . self::FLOAT_POINTER . '"');
+                } else {
+                    $hasPointer = true;
+                }
+            }
+
             $result .= $this->currentChar;
             $this->readChar();
         }
-        return (int)$result;
+
+        return strpos($result, self::FLOAT_POINTER) === false ? (int)$result : (float)$result;
     }
 
     /**
@@ -124,7 +139,7 @@ class Lexer
             }
 
             if ($this->isDigit($this->currentChar)) {
-                return $this->makeToken(TokenType::T_INTEGER, $this->readInteger());
+                return $this->makeToken(TokenType::T_NUMBER, $this->readNumber());
             }
             if ($this->currentChar === '+') {
                 $this->readChar();
@@ -141,6 +156,14 @@ class Lexer
             if ($this->currentChar === '/') {
                 $this->readChar();
                 return $this->makeToken(TokenType::T_DIV, '/');
+            }
+            if ($this->currentChar === '(') {
+                $this->readChar();
+                return $this->makeToken(TokenType::T_LEFT_PARENTHESIS, '(');
+            }
+            if ($this->currentChar === ')') {
+                $this->readChar();
+                return $this->makeToken(TokenType::T_RIGHT_PARENTHESIS, ')');
             }
 
             $this->error('Unknown character "' . $this->currentChar . '"');

@@ -42,7 +42,7 @@ class Interpreter
     private function factor()
     {
         $token = $this->currentToken;
-        $this->pickUp(TokenType::T_INTEGER);
+        $this->pickUp(TokenType::T_NUMBER);
         return $token->getValue();
     }
 
@@ -82,13 +82,10 @@ class Interpreter
     }
 
     /**
-     * @param $text
      * @return mixed
      */
-    public function evaluate($text)
+    private function expression()
     {
-        $this->lexer->setText($text);
-
         $this->currentToken = $this->lexer->getNextToken();
         $result = $this->term();
 
@@ -107,5 +104,15 @@ class Interpreter
             }
         }
         return $result;
+    }
+
+    /**
+     * @param $text
+     * @return mixed
+     */
+    public function evaluate($text)
+    {
+        $this->lexer->setText($text);
+        return $this->expression();
     }
 }
