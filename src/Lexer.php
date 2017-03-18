@@ -2,7 +2,7 @@
 
 namespace Simbigo\Phlint;
 
-use Simbigo\Phlint\Exceptions\ParseException;
+use Simbigo\Phlint\Exceptions\ParseError;
 use Simbigo\Phlint\Tokens\Token;
 use Simbigo\Phlint\Tokens\TokenType;
 
@@ -11,7 +11,7 @@ class Lexer
     /**
      * @var string
      */
-    private $currentChar = '';
+    private $currentChar;
     /**
      * @var int
      */
@@ -33,7 +33,7 @@ class Lexer
     /**
      * @param string $message
      * @param bool|true $appendInfo
-     * @throws ParseException
+     * @throws ParseError
      */
     private function error(string $message = '', bool $appendInfo = true)
     {
@@ -45,16 +45,7 @@ class Lexer
             $message .= ' in position ' . $this->pos . '.';
         }
 
-        throw new ParseException($message);
-    }
-
-    /**
-     * @param string $char
-     * @return bool
-     */
-    private function isAlpha(string $char)
-    {
-        return ctype_alpha($char);
+        throw new ParseError($message);
     }
 
     /**
@@ -99,6 +90,19 @@ class Lexer
     }
 
     /**
+     * @return int
+     */
+    private function readInteger()
+    {
+        $result = '';
+        while (!$this->endOfSource() && $this->isDigit($this->currentChar)) {
+            $result .= $this->currentChar;
+            $this->readChar();
+        }
+        return (int)$result;
+    }
+
+    /**
      *
      */
     private function skipWhitespace()
@@ -114,7 +118,6 @@ class Lexer
     public function getNextToken(): Token
     {
         while (!$this->endOfSource()) {
-            $this->readChar();
 
             if ($this->isWhitespace($this->currentChar)) {
                 $this->skipWhitespace();
@@ -124,15 +127,19 @@ class Lexer
                 return $this->makeToken(TokenType::T_INTEGER, $this->readInteger());
             }
             if ($this->currentChar === '+') {
+                $this->readChar();
                 return $this->makeToken(TokenType::T_PLUS, '+');
             }
             if ($this->currentChar === '-') {
+                $this->readChar();
                 return $this->makeToken(TokenType::T_MINUS, '-');
             }
             if ($this->currentChar === '*') {
+                $this->readChar();
                 return $this->makeToken(TokenType::T_MUL, '*');
             }
             if ($this->currentChar === '/') {
+                $this->readChar();
                 return $this->makeToken(TokenType::T_DIV, '/');
             }
 
@@ -148,21 +155,8 @@ class Lexer
     public function setText(string $text)
     {
         $this->text = $text;
-        $this->currentChar = '';
         $this->pos = -1;
-    }
-
-    /**
-     * @return int
-     */
-    private function readInteger()
-    {
-        $result = '';
-        while (!$this->endOfSource() && $this->isDigit($this->currentChar)) {
-            $result .= $this->currentChar;
-            $this->readChar();
-        }
-        return (int)$result;
+        $this->readChar();
     }
 
 }

@@ -1,6 +1,6 @@
 <?php
 
-use Simbigo\Phlint\Exceptions\ParseException;
+use Simbigo\Phlint\Exceptions\ParseError;
 use Simbigo\Phlint\Interpreter;
 use Simbigo\Phlint\Lexer;
 
@@ -24,7 +24,7 @@ if ($argc > 1) {
     $code = file_get_contents($file);
     try {
         echo $interpreter->evaluate($code) . PHP_EOL;
-    } catch (ParseException $e) {
+    } catch (ParseError $e) {
         echo $e->getMessage() . PHP_EOL;
         exit($e->getCode());
     }
@@ -40,7 +40,7 @@ while (!$exit) {
     } else {
         try {
             echo $interpreter->evaluate($code) . PHP_EOL;
-        } catch (ParseException $e) {
+        } catch (ParseError $e) {
             echo $e->getMessage() . PHP_EOL;
             exit($e->getCode());
         }
