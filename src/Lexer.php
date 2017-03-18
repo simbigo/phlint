@@ -115,6 +115,12 @@ class Lexer
             if ($this->currentChar === '-') {
                 return $this->makeToken(TokenType::T_MINUS, '-');
             }
+            if ($this->currentChar === '*') {
+                return $this->makeToken(TokenType::T_MUL, '*');
+            }
+            if ($this->currentChar === '/') {
+                return $this->makeToken(TokenType::T_DIV, '/');
+            }
 
             $this->error('Unknown character "' . $this->currentChar . '"');
         }

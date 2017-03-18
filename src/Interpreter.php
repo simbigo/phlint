@@ -37,6 +37,10 @@ class Interpreter
             $result = $digitLeft->getValue() + $digitRight->getValue();
         } elseif ($operator->is(TokenType::T_MINUS)) {
             $result = $digitLeft->getValue() - $digitRight->getValue();
+        } elseif ($operator->is(TokenType::T_MUL)) {
+            $result = $digitLeft->getValue() * $digitRight->getValue();
+        } elseif ($operator->is(TokenType::T_DIV)) {
+            $result = $digitLeft->getValue() / $digitRight->getValue();
         }
         return $result;
     }
