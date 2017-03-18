@@ -19,3 +19,17 @@ $ phlint
 Hello
 [phlint]: exit
 ```
+
+## Backus–Naur form
+
+```
+<EXPRESSION> ::= TERM (PM_OPERATOR TERM)*
+<TERM> ::= FACTOR (MD_OPERATOR FACTOR)*
+<FACTOR> ::= INTEGER
+<PM_OPERATOR> ::= "+"|"-"
+<INTEGER> ::= DIGIT(DIGIT)*
+<DIGIT> ::= 0|1|2|3|4|5|6|7|8|9
+```
+
+### Expressions
+

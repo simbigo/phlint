@@ -2,9 +2,10 @@
 
 namespace Simbigo\Phlint\Tokens;
 
-use SplEnum;
-
-class TokenType extends SplEnum
+class TokenType
 {
-    const T_EOF = 'EOF';
+    const T_EOF = 0;
+    const T_INTEGER = 1;
+    const T_PLUS = 2;
+    const T_MINUS = 3;
 }
