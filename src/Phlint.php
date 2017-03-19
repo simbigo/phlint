@@ -5,6 +5,7 @@ namespace Simbigo\Phlint;
 use Exception;
 use Simbigo\Phlint\AST\BinaryOperation;
 use Simbigo\Phlint\AST\Number;
+use Simbigo\Phlint\Core\PrintPhlintFunction;
 use Simbigo\Phlint\Exceptions\ParseError;
 use Simbigo\Phlint\Exceptions\SyntaxError;
 use Simbigo\Phlint\Tokens\Token;
@@ -45,20 +46,37 @@ class Phlint
         $this->interpreter = $interpreter;
         $this->parser = $parser;
         $this->lexer = $lexer;
+        $this->configure();
+    }
+
+    /**
+     *
+     */
+    private function configure()
+    {
+        $this->interpreter->registerFunction(new PrintPhlintFunction());
+    }
+
+    /**
+     * @param Token $token
+     */
+    public function dumpToken(Token $token)
+    {
+        echo 'Token: {' . PHP_EOL;
+        echo '    type: ' . $token->getType() . PHP_EOL;
+        echo '    value: ' . $token->getValue() . PHP_EOL;
+        echo '    line: ' . $token->getLine() . PHP_EOL;
+        echo '    position: ' . $token->getPos() . PHP_EOL;
+        echo '}' . PHP_EOL;
     }
 
     /**
      * @param Token[] $tokens
      */
-    private function printTokens($tokens)
+    public function dumpTokens(array $tokens)
     {
         foreach ($tokens as $token) {
-            echo 'Token: {' . PHP_EOL;
-            echo '    type: ' . $token->getType() . PHP_EOL;
-            echo '    value: ' . $token->getValue() . PHP_EOL;
-            echo '    line: ' . $token->getLine() . PHP_EOL;
-            echo '    position: ' . $token->getPos() . PHP_EOL;
-            echo '}' . PHP_EOL;
+            $this->dumpToken($token);
         }
     }
 

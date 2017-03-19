@@ -6,8 +6,14 @@ use Simbigo\Phlint\Exceptions\ParseError;
 use Simbigo\Phlint\Tokens\Token;
 use Simbigo\Phlint\Tokens\TokenType;
 
+/**
+ * Class Lexer
+ */
 class Lexer
 {
+    /**
+     * Float pointer of numbers
+     */
     const FLOAT_POINTER = '.';
 
     /**
@@ -42,19 +48,10 @@ class Lexer
 
     /**
      * @param string $message
-     * @param bool|true $appendInfo
      * @throws ParseError
      */
-    private function error(string $message = '', bool $appendInfo = true)
+    private function error(string $message = '')
     {
-        if (empty($message)) {
-            $message = 'Parse error.';
-        }
-
-        if ($appendInfo) {
-            $message .= ' in position ' . $this->pos . '.';
-        }
-
         $lines = explode("\n", $this->source);
         $line = $lines[$this->line];
 
@@ -185,7 +182,12 @@ class Lexer
                 return $this->makeToken(TokenType::T_NUMBER, $this->readNumber());
             }
             if ($this->isAlpha($this->currentChar)) {
-                return $this->makeToken(TokenType::T_VARIABLE, $this->readWord());
+                $word = $this->readWord();
+                if ($this->currentChar === '(') {
+                    return $this->makeToken(TokenType::T_FUNCTION, $word);
+                } else {
+                    return $this->makeToken(TokenType::T_VARIABLE, $word);
+                }
             }
             if ($this->currentChar === '=') {
                 $this->readChar();

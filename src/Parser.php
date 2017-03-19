@@ -2,6 +2,7 @@
 
 namespace Simbigo\Phlint;
 
+use Simbigo\Phlint\AST\ASTNull;
 use Simbigo\Phlint\AST\BinaryOperation;
 use Simbigo\Phlint\AST\Number;
 use Simbigo\Phlint\AST\VariableAccessor;
@@ -9,6 +10,9 @@ use Simbigo\Phlint\Exceptions\SyntaxError;
 use Simbigo\Phlint\Tokens\Token;
 use Simbigo\Phlint\Tokens\TokenType;
 
+/**
+ * Class Parser
+ */
 class Parser
 {
     /**
@@ -46,7 +50,7 @@ class Parser
     }
 
     /**
-     * @return BinaryOperation|\Simbigo\Phlint\AST\Number
+     * @return BinaryOperation|\Simbigo\Phlint\AST\Number|VariableAccessor
      */
     private function factor()
     {
@@ -59,11 +63,17 @@ class Parser
             $node = $this->expression();
             $this->pickup(TokenType::T_RIGHT_PARENTHESIS);
             return $node;
+        } elseif ($token->is(TokenType::T_VARIABLE)) {
+            $this->pickup(TokenType::T_VARIABLE);
+            return new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
         }
 
         return null;
     }
 
+    /**
+     *
+     */
     private function nextToken()
     {
         $this->tokenIndex++;
@@ -87,6 +97,9 @@ class Parser
         }
     }
 
+    /**
+     * @return array
+     */
     private function program()
     {
         $statements = [];
@@ -97,6 +110,9 @@ class Parser
         return $statements;
     }
 
+    /**
+     * @return VariableAccessor
+     */
     private function setter()
     {
         $token = $this->token;
@@ -105,6 +121,9 @@ class Parser
         return new VariableAccessor($token, $this->expression(), VariableAccessor::ACTION_SET);
     }
 
+    /**
+     * @return VariableAccessor
+     */
     private function statement()
     {
         $node = $this->setter();

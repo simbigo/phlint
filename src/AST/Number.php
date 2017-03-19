@@ -10,7 +10,7 @@ use Simbigo\Phlint\Tokens\Token;
 class Number extends ASTNode
 {
     /**
-     * @var int|float
+     * @var Token
      */
     private $value;
 
@@ -25,7 +25,7 @@ class Number extends ASTNode
     }
 
     /**
-     * @return float|int
+     * @return Token
      */
     public function getValue()
     {

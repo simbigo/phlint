@@ -6,6 +6,7 @@ use Simbigo\Phlint\AST\ASTNode;
 use Simbigo\Phlint\AST\BinaryOperation;
 use Simbigo\Phlint\AST\Number;
 use Simbigo\Phlint\AST\VariableAccessor;
+use Simbigo\Phlint\Core\PhlintFunction;
 use Simbigo\Phlint\Exceptions\InternalError;
 use Simbigo\Phlint\Exceptions\SyntaxError;
 use Simbigo\Phlint\Tokens\TokenType;
@@ -16,9 +17,23 @@ use Simbigo\Phlint\Tokens\TokenType;
 class Interpreter
 {
     /**
+     * @var PhlintFunction[]
+     */
+    private $functionMap = [];
+    /**
      * @var array
      */
     private $variableMap = [];
+
+    /**
+     * @param $functionName
+     * @param $arguments
+     * @return mixed
+     */
+    private function callFunction($functionName, $arguments)
+    {
+        return $this->functionMap[$functionName]->call($arguments);
+    }
 
     /**
      * @param BinaryOperation $node
@@ -64,8 +79,8 @@ class Interpreter
     }
 
     /**
-     * @param Number $node
-     * @return int|float
+     * @param \Simbigo\Phlint\AST\Number|Number $node
+     * @return float|int
      */
     private function visitNumberNode(Number $node)
     {
@@ -99,5 +114,13 @@ class Interpreter
         foreach ($statements as $statement) {
             $this->visitNode($statement);
         }
+    }
+
+    /**
+     * @param PhlintFunction $function
+     */
+    public function registerFunction(PhlintFunction $function)
+    {
+        $this->functionMap[$function->getName()] = $function;
     }
 }
