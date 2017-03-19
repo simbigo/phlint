@@ -64,11 +64,11 @@ class Parser
             $node = $this->expression();
             $this->pickup(TokenType::T_RIGHT_PARENTHESIS);
             return $node;
-        } elseif ($token->is(TokenType::T_VARIABLE)) {
-            $this->pickup(TokenType::T_VARIABLE);
+        } elseif ($token->is(TokenType::T_IDENTIFIER)) {
+            $this->pickup(TokenType::T_IDENTIFIER);
             return new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
-        }  elseif ($token->is(TokenType::T_VARIABLE)) {
-            $this->pickup(TokenType::T_VARIABLE);
+        }  elseif ($token->is(TokenType::T_IDENTIFIER)) {
+            $this->pickup(TokenType::T_IDENTIFIER);
             return new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
         } elseif ($token->is(TokenType::T_FUNCTION)) {
             return $this->functionCall();
@@ -83,7 +83,7 @@ class Parser
     private function functionCall()
     {
         $token = $this->token;
-        $this->pickup(TokenType::T_FUNCTION);
+        $this->pickup(TokenType::T_IDENTIFIER);
         $this->pickup(TokenType::T_LEFT_PARENTHESIS);
         $node = $this->expression();
         $this->pickup(TokenType::T_RIGHT_PARENTHESIS);
@@ -135,7 +135,7 @@ class Parser
     private function setter()
     {
         $token = $this->token;
-        $this->pickup(TokenType::T_VARIABLE);
+        $this->pickup(TokenType::T_IDENTIFIER);
         $this->pickup(TokenType::T_SET_EQUALS);
         return new VariableAccessor($token, $this->expression(), VariableAccessor::ACTION_SET);
     }
@@ -145,12 +145,18 @@ class Parser
      */
     private function statement()
     {
-        if ($this->token->is(TokenType::T_VARIABLE)) {
-            $node = $this->setter();
-        } else {
+        if ($this->seeNext()->is(TokenType::T_LEFT_PARENTHESIS)) {
             $node = $this->functionCall();
+        } else {
+            $node = $this->setter();
         }
         return $node;
+    }
+
+    private function seeNext($offset = 1)
+    {
+        $offset = $this->tokenIndex + $offset;
+        return $this->tokens[$offset] ?? null;
     }
 
     /**

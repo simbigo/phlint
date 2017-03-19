@@ -16,10 +16,20 @@ class Lexer
      */
     const FLOAT_POINTER = '.';
 
+    const KEYWORD_CLASS = 'class';
+
     /**
      * @var string
      */
     private $currentChar;
+
+    /**
+     * @var array
+     */
+    private $keywords = [
+        self::KEYWORD_CLASS => TokenType::T_KEYWORD_CLASS
+    ];
+
     /**
      * @var int
      */
@@ -89,6 +99,19 @@ class Lexer
     private function isWhitespace(string $char): bool
     {
         return in_array($char, [' ', "\r", "\n", "\t"], true);
+    }
+
+    /**
+     * @param $word
+     * @return null|Token
+     */
+    private function makeKeywordToken($word)
+    {
+        $token = null;
+        if (isset($this->keywords[$word])) {
+            $token = $this->makeToken($this->keywords[$word], $word);
+        }
+        return $token;
     }
 
     /**
@@ -178,49 +201,47 @@ class Lexer
                 $this->skipWhitespace();
             }
 
+            switch ($this->currentChar) {
+                case '=':
+                    $this->readChar();
+                    return $this->makeToken(TokenType::T_SET_EQUALS, '=');
+                case ';':
+                    $this->readChar();
+                    return $this->makeToken(TokenType::T_SEMICOLON, ';');
+                case '+':
+                    $this->readChar();
+                    return $this->makeToken(TokenType::T_PLUS, '+');
+                case '-':
+                    $this->readChar();
+                    return $this->makeToken(TokenType::T_MINUS, '-');
+                case '*':
+                    $this->readChar();
+                    return $this->makeToken(TokenType::T_MUL, '*');
+                case '/':
+                    $this->readChar();
+                    return $this->makeToken(TokenType::T_DIV, '/');
+                case '(':
+                    $this->readChar();
+                    return $this->makeToken(TokenType::T_LEFT_PARENTHESIS, '(');
+                case ')':
+                    $this->readChar();
+                    return $this->makeToken(TokenType::T_RIGHT_PARENTHESIS, ')');
+            }
+
             if ($this->isDigit($this->currentChar)) {
                 return $this->makeToken(TokenType::T_NUMBER, $this->readNumber());
             }
+
             if ($this->isAlpha($this->currentChar)) {
                 $word = $this->readWord();
-                if ($this->currentChar === '(') {
-                    return $this->makeToken(TokenType::T_FUNCTION, $word);
-                } else {
-                    return $this->makeToken(TokenType::T_VARIABLE, $word);
+
+                $token = $this->makeKeywordToken($word);
+                if ($token === null) {
+                    $token = $this->makeToken(TokenType::T_IDENTIFIER, $word);
                 }
+                return $token;
             }
-            if ($this->currentChar === '=') {
-                $this->readChar();
-                return $this->makeToken(TokenType::T_SET_EQUALS, '=');
-            }
-            if ($this->currentChar === ';') {
-                $this->readChar();
-                return $this->makeToken(TokenType::T_SEMICOLON, ';');
-            }
-            if ($this->currentChar === '+') {
-                $this->readChar();
-                return $this->makeToken(TokenType::T_PLUS, '+');
-            }
-            if ($this->currentChar === '-') {
-                $this->readChar();
-                return $this->makeToken(TokenType::T_MINUS, '-');
-            }
-            if ($this->currentChar === '*') {
-                $this->readChar();
-                return $this->makeToken(TokenType::T_MUL, '*');
-            }
-            if ($this->currentChar === '/') {
-                $this->readChar();
-                return $this->makeToken(TokenType::T_DIV, '/');
-            }
-            if ($this->currentChar === '(') {
-                $this->readChar();
-                return $this->makeToken(TokenType::T_LEFT_PARENTHESIS, '(');
-            }
-            if ($this->currentChar === ')') {
-                $this->readChar();
-                return $this->makeToken(TokenType::T_RIGHT_PARENTHESIS, ')');
-            }
+
 
             $this->error();
         }
