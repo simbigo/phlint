@@ -17,6 +17,8 @@ class Lexer
     const FLOAT_POINTER = '.';
 
     const KEYWORD_CLASS = 'class';
+    const KEYWORD_IF = 'if';
+    const KEYWORD_ELSE = 'else';
 
     /**
      * @var string
@@ -27,7 +29,9 @@ class Lexer
      * @var array
      */
     private $keywords = [
-        self::KEYWORD_CLASS => TokenType::T_KEYWORD_CLASS
+        self::KEYWORD_CLASS => TokenType::T_KEYWORD_CLASS,
+        self::KEYWORD_IF => TokenType::T_KEYWORD_IF,
+        self::KEYWORD_ELSE => TokenType::T_KEYWORD_ELSE,
     ];
 
     /**
@@ -232,6 +236,29 @@ class Lexer
                 case '}':
                     $this->readChar();
                     return $this->makeToken(TokenType::T_RIGHT_BRACE, '}');
+                case '>':
+                    $tokenType = TokenType::T_GREATER;
+                    $tokenValue = '>';
+                    if ($this->seeNext() === '=') {
+                        $tokenType = TokenType::T_GREATER_EQUAL;
+                        $tokenValue = '>=';
+                    }
+                    $this->readChar();
+                    return $this->makeToken($tokenType, $tokenValue);
+                case '<':
+                    $tokenType = TokenType::T_LESS;
+                    $tokenValue = '<';
+                    if ($this->seeNext() === '=') {
+                        $tokenType = TokenType::T_LESS_EQUAL;
+                        $tokenValue = '<=';
+                    }
+                    $this->readChar();
+                    $this->readChar();
+                    return $this->makeToken($tokenType, $tokenValue);
+                case '!':
+                    $this->readChar();
+                    $this->readChar();
+                    return $this->makeToken(TokenType::T_BANG_EQUAL, '!=');
             }
 
             if ($this->isDigit($this->currentChar)) {
@@ -248,11 +275,16 @@ class Lexer
                 return $token;
             }
 
-
             $this->error();
         }
 
         return $this->makeToken(TokenType::T_EOF, null);
+    }
+
+    private function seeNext($offset = 1)
+    {
+        $offset = $this->pos + $offset;
+        return mb_strlen($this->source) >= $offset ? mb_substr($this->source, $offset, 1) : null;
     }
 
     /**

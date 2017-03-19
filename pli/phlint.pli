@@ -1,6 +1,12 @@
 diff = 11;
-age = 23 - (1 + diff) * 2;
+foo = 43 - (1 + diff) * 2;
+
+if age < 20 {
+    bar = 0;
+} else {
+    bar = 1;
+}
+
+print(age + bar);
 
 class User = {}
-
-print(age);

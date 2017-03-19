@@ -23,24 +23,28 @@ Hello
 ## Backus–Naur form
 
 ```
-<PROGRAM>           ::= CLASS_DEFINITION|STATEMENT_LIST
-<STATEMENT_LIST>    ::= STATEMENT ";" (STATEMENT ";")*
-<STATEMENT>         ::= SETTER|CALL_FUNCTION
-<SETTER>            ::= VARIABLE "=" EXPRESSION
-<CALL_FUNCTION>     ::= FUNCTION_NAME "(" NUMBER ")"
-<VARIABLE>          ::= WORD
-<FUNCTION_NAME>     ::= WORD
-<EXPRESSION>        ::= TERM (PM_OPERATOR TERM)*
-<TERM>              ::= FACTOR (MD_OPERATOR FACTOR)*
-<FACTOR>            ::= NUMBER|("(" EXPRESSION ")")
-<PM_OPERATOR>       ::= "+"|"-"
-<MD_OPERATOR>       ::= "*"|"/"
-<NUMBER>            ::= INTEGER|FLOAT
-<INTEGER>           ::= DIGIT(DIGIT)*
-<FLOAT>             ::= INTEGER(.INTEGER)
-<DIGIT>             ::= 0|1|2|3|4|5|6|7|8|9
-<WORD>              ::= (ALPHA|"_")(ALPHA|"_")*
-<ALPHA>             ::= A..z
+<PROGRAM>                 ::= (<CLASS_DEFINITION>|<IF_CONDITION>|<STATEMENT_LIST>)*
+<CLASS_DEFINITION>        ::= "class" <IDENTIFIER> "=" "{" "}"
+<IF_CONDITION>            ::= "if" <CONSTRUCTION_CONDITION> "{" <PROGRAM> "}" ("else" "{" <PROGRAM> "}")?
+<CONSTRUCTION_CONDITION>  ::= <EXPRESSION> <COMPARE_OP> <EXPRESSION>
+<STATEMENT_LIST>          ::= <STATEMENT> ";" (<STATEMENT> ";")*
+<STATEMENT>               ::= <SETTER>|<CALL_FUNCTION>
+<COMPARE_OP>              ::= ">"|"<"|"=="|">="|"<="|"!="
+<SETTER>                  ::= <VARIABLE> "=" <EXPRESSION>
+<CALL_FUNCTION>           ::= <FUNCTION_NAME> "(" <NUMBER> ")"
+<VARIABLE>                ::= <IDENTIFIER>
+<FUNCTION_NAME>           ::= <IDENTIFIER>
+<EXPRESSION>              ::= <TERM> (<PM_OPERATOR> <TERM>)*
+<TERM>                    ::= <FACTOR> (<MD_OPERATOR> <FACTOR>)*
+<FACTOR>                  ::= <NUMBER>|("(" <EXPRESSION> ")")
+<PM_OPERATOR>             ::= "+"|"-"
+<MD_OPERATOR>             ::= "*"|"/"
+<NUMBER>                  ::= <INTEGER>|<FLOAT>
+<INTEGER>                 ::= <DIGIT>(<DIGIT>)*
+<FLOAT>                   ::= <INTEGER>("."<INTEGER>)
+<DIGIT>                   ::= 0|1|2|3|4|5|6|7|8|9
+<IDENTIFIER>              ::= (<ALPHA>|"_")(<ALPHA>|"_")*
+<ALPHA>                   ::= A..z
 ```
 
 ### Whitespaces

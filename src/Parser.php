@@ -6,6 +6,7 @@ use Simbigo\Phlint\AST\ASTNull;
 use Simbigo\Phlint\AST\BinaryOperation;
 use Simbigo\Phlint\AST\ClassDefinition;
 use Simbigo\Phlint\AST\FunctionCall;
+use Simbigo\Phlint\AST\IfCondition;
 use Simbigo\Phlint\AST\Number;
 use Simbigo\Phlint\AST\VariableAccessor;
 use Simbigo\Phlint\Exceptions\SyntaxError;
@@ -29,6 +30,20 @@ class Parser
      * @var Token[]
      */
     private $tokens;
+
+    /**
+     * @return ClassDefinition
+     */
+    private function classDefinition()
+    {
+        $this->pickup(TokenType::T_KEYWORD_CLASS);
+        $token = $this->token;
+        $this->pickup(TokenType::T_IDENTIFIER);
+        $this->pickup(TokenType::T_SET_EQUALS);
+        $this->pickup(TokenType::T_LEFT_BRACE);
+        $this->pickup(TokenType::T_RIGHT_BRACE);
+        return new ClassDefinition($token);
+    }
 
     /**
      * @return Number|BinaryOperation
@@ -68,7 +83,7 @@ class Parser
         } elseif ($token->is(TokenType::T_IDENTIFIER)) {
             $this->pickup(TokenType::T_IDENTIFIER);
             return new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
-        }  elseif ($token->is(TokenType::T_IDENTIFIER)) {
+        } elseif ($token->is(TokenType::T_IDENTIFIER)) {
             if ($this->seeNext()->is(TokenType::T_LEFT_PARENTHESIS)) {
                 return $this->functionCall();
             } else {
@@ -91,6 +106,43 @@ class Parser
         $node = $this->expression();
         $this->pickup(TokenType::T_RIGHT_PARENTHESIS);
         return new FunctionCall($token, $node);
+    }
+
+    /**
+     * @return IfCondition
+     */
+    private function ifCondition()
+    {
+        $this->pickup(TokenType::T_KEYWORD_IF);
+        $validCompareTokens = [
+            TokenType::T_LESS,
+            TokenType::T_GREATER,
+            TokenType::T_LESS_EQUAL,
+            TokenType::T_GREATER_EQUAL,
+            TokenType::T_BANG_EQUAL,
+            TokenType::T_EQUAL
+        ];
+
+        $leftArgument = $this->expression();
+        $compareOperator = $this->token;
+        if ($this->token->isIn($validCompareTokens)) {
+            $this->pickup($this->token->getType());
+        }
+        $rightArgument = $this->expression();
+
+        $this->pickup(TokenType::T_LEFT_BRACE);
+        $trueBranch = $this->program();
+        $this->pickup(TokenType::T_RIGHT_BRACE);
+
+        $falseBranch = [new ASTNull()];
+        if ($this->token->is(TokenType::T_KEYWORD_ELSE)) {
+            $this->pickup(TokenType::T_KEYWORD_ELSE);
+            $this->pickup(TokenType::T_LEFT_BRACE);
+            $falseBranch = $this->program();
+            $this->pickup(TokenType::T_RIGHT_BRACE);
+        }
+
+        return new IfCondition($compareOperator, $leftArgument, $rightArgument, $trueBranch, $falseBranch);
     }
 
     /**
@@ -146,17 +198,6 @@ class Parser
         }
     }
 
-    private function classDefinition()
-    {
-        $this->pickup(TokenType::T_KEYWORD_CLASS);
-        $token = $this->token;
-        $this->pickup(TokenType::T_IDENTIFIER);
-        $this->pickup(TokenType::T_SET_EQUALS);
-        $this->pickup(TokenType::T_LEFT_BRACE);
-        $this->pickup(TokenType::T_RIGHT_BRACE);
-        return new ClassDefinition($token);
-    }
-
     /**
      * @return array
      */
@@ -166,12 +207,24 @@ class Parser
         while (!$this->token->is(TokenType::T_EOF)) {
             if ($this->token->is(TokenType::T_KEYWORD_CLASS)) {
                 $statements[] = $this->classDefinition();
+            } elseif ($this->token->is(TokenType::T_KEYWORD_IF)) {
+                $statements[] = $this->ifCondition();
             } else {
                 $statements[] = $this->statement();
                 $this->pickup(TokenType::T_SEMICOLON);
             }
         }
         return $statements;
+    }
+
+    /**
+     * @param int $offset
+     * @return null|Token
+     */
+    private function seeNext($offset = 1)
+    {
+        $offset = $this->tokenIndex + $offset;
+        return $this->tokens[$offset] ?? null;
     }
 
     /**
@@ -196,12 +249,6 @@ class Parser
             $node = $this->setter();
         }
         return $node;
-    }
-
-    private function seeNext($offset = 1)
-    {
-        $offset = $this->tokenIndex + $offset;
-        return $this->tokens[$offset] ?? null;
     }
 
     /**

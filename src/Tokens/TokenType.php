@@ -24,7 +24,15 @@ class TokenType
     const T_SET_EQUALS = 12;
     const T_SEMICOLON = 13;
     const T_UNDERSCORE = 14;
-    const T_KEYWORD_CLASS = 15;
+    const T_EQUAL = 15;
+    const T_BANG_EQUAL = 16;
+    const T_LESS = 17;
+    const T_LESS_EQUAL = 18;
+    const T_GREATER = 19;
+    const T_GREATER_EQUAL = 20;
+    const T_KEYWORD_CLASS = 21;
+    const T_KEYWORD_IF = 22;
+    const T_KEYWORD_ELSE = 23;
 
 
     private static $constants;
