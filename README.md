@@ -51,17 +51,17 @@ Hello
 
 Ignore whitespace if it isn't a part of a string.
 
-```
+```c
 4     +    4
 ```
 equal:
-```
+```c
 4+4
 ```
 
 ### Expressions
 
-```
+```c
 3 + 2;
 6 - 4;
 2 * 5;
@@ -73,14 +73,14 @@ equal:
 
 ### Variables
 
-```
+```c
 a = 3 + 4;
 b = 2 * a
 ```
 
 ### Functions
 
-```
+```c
 a = 2;
 sum = 3 + a;
 print(sum);
@@ -89,7 +89,7 @@ print(sum * 8);
 
 ### Flow control
 
-```
+```c
 foo = 11
 if foo > getValue(5 + 5) {
     bar = 1;
@@ -104,6 +104,6 @@ if bar == 0 {
 
 ### Classes
 
-```
+```c
 class Drink = {}
 ```
