@@ -4,6 +4,7 @@ namespace Simbigo\Phlint;
 
 use Simbigo\Phlint\AST\ASTNode;
 use Simbigo\Phlint\AST\BinaryOperation;
+use Simbigo\Phlint\AST\ClassDefinition;
 use Simbigo\Phlint\AST\FunctionCall;
 use Simbigo\Phlint\AST\Number;
 use Simbigo\Phlint\AST\VariableAccessor;
@@ -80,10 +81,16 @@ class Interpreter
             return $this->visitVariableAccessorNode($node);
         } elseif ($node instanceof FunctionCall) {
             return $this->visitFunctionCallNode($node);
+        } elseif ($node instanceof ClassDefinition) {
+            return $this->visitClassDefinitionNode($node);
         }
 
-
         throw new InternalError('Unknown node type: ' . get_class($node));
+    }
+
+    private function visitClassDefinitionNode(ClassDefinition $node)
+    {
+        return null;
     }
 
     /**

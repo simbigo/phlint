@@ -9,6 +9,7 @@ use Simbigo\Phlint\Core\PrintPhlintFunction;
 use Simbigo\Phlint\Exceptions\ParseError;
 use Simbigo\Phlint\Exceptions\SyntaxError;
 use Simbigo\Phlint\Tokens\Token;
+use Simbigo\Phlint\Tokens\TokenType;
 
 /**
  * Class Phlint
@@ -93,24 +94,31 @@ class Phlint
 
     /**
      * @param Token $token
+     * @param bool $short
      */
-    public function dumpToken(Token $token)
+    public function dumpToken(Token $token, $short = false)
     {
-        echo 'Token: {' . PHP_EOL;
-        echo '    type: ' . $token->getType() . PHP_EOL;
-        echo '    value: ' . $token->getValue() . PHP_EOL;
-        echo '    line: ' . $token->getLine() . PHP_EOL;
-        echo '    position: ' . $token->getPos() . PHP_EOL;
-        echo '}' . PHP_EOL;
+        if ($short) {
+            echo 'Token: { name: ' . TokenType::getName($token->getType()) . ' }' . PHP_EOL;
+        } else {
+            echo 'Token: {' . PHP_EOL;
+            echo '    type: ' . $token->getType() . PHP_EOL;
+            echo '    name: ' . TokenType::getName($token->getType()) . PHP_EOL;
+            echo '    value: ' . $token->getValue() . PHP_EOL;
+            echo '    line: ' . $token->getLine() . PHP_EOL;
+            echo '    position: ' . $token->getPos() . PHP_EOL;
+            echo '}' . PHP_EOL;
+        }
     }
 
     /**
      * @param Token[] $tokens
+     * @param bool $short
      */
-    public function dumpTokens(array $tokens)
+    public function dumpTokens(array $tokens, $short = false)
     {
         foreach ($tokens as $token) {
-            $this->dumpToken($token);
+            $this->dumpToken($token, $short);
         }
     }
 
@@ -142,7 +150,7 @@ class Phlint
     {
         try {
             $tokens = $this->lexer->tokenize($source);
-            //$this->printTokens($tokens); exit;
+            //$this->dumpTokens($tokens, true); exit;
             $statements = $this->parser->parse($tokens);
             $this->interpreter->evaluate($statements);
         } catch (Exception $e) {

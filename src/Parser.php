@@ -4,6 +4,7 @@ namespace Simbigo\Phlint;
 
 use Simbigo\Phlint\AST\ASTNull;
 use Simbigo\Phlint\AST\BinaryOperation;
+use Simbigo\Phlint\AST\ClassDefinition;
 use Simbigo\Phlint\AST\FunctionCall;
 use Simbigo\Phlint\AST\Number;
 use Simbigo\Phlint\AST\VariableAccessor;
@@ -68,10 +69,12 @@ class Parser
             $this->pickup(TokenType::T_IDENTIFIER);
             return new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
         }  elseif ($token->is(TokenType::T_IDENTIFIER)) {
-            $this->pickup(TokenType::T_IDENTIFIER);
-            return new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
-        } elseif ($token->is(TokenType::T_FUNCTION)) {
-            return $this->functionCall();
+            if ($this->seeNext()->is(TokenType::T_LEFT_PARENTHESIS)) {
+                return $this->functionCall();
+            } else {
+                $this->pickup(TokenType::T_IDENTIFIER);
+                return new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
+            }
         }
 
         return null;
@@ -108,12 +111,50 @@ class Parser
         if ($this->token->is($tokenType)) {
             $this->nextToken();
         } else {
-            $message = 'Invalid token: ' . $this->token->getValue() . PHP_EOL;
-            $message .= 'Wait: ' . $tokenType . PHP_EOL;
-            $message .= 'Line: ' . $this->token->getLine() . PHP_EOL;
-            $message .= 'Position: ' . $this->token->getPos();
+            $message = 'Invalid token: ' . $this->token->getType() . ' [ ' . TokenType::getName($this->token->getType()) . ' ]' . PHP_EOL;
+            $message .= 'Wait: ' . $tokenType . ' [ ' . TokenType::getName($tokenType) . ' ]' . PHP_EOL;
+            $message .= 'Value: ' . $this->token->getValue() . PHP_EOL;
+            $message .= 'Line: ' . ($this->token->getLine() + 1) . PHP_EOL;
+            $message .= 'Position: ' . $this->token->getPos() . PHP_EOL . PHP_EOL;
+
+            $tokenPos = $this->tokenIndex;
+            while (isset($this->tokens[$tokenPos - 1]) && $this->tokens[$tokenPos - 1]->getLine() === $this->token->getLine()) {
+                $tokenPos--;
+            }
+            $tokenPos++;
+
+            $tokensForMessage = [];
+            while (isset($this->tokens[$tokenPos]) && $this->tokens[$tokenPos]->getLine() === $this->token->getLine()) {
+                $tokensForMessage[] = $this->tokens[$tokenPos];
+                $tokenPos++;
+            }
+
+            $cursorPos = 0;
+            $source = '';
+            /** @var Token $item */
+            foreach ($tokensForMessage as $item) {
+                if ($item === $this->token) {
+                    $cursorPos = mb_strlen($source);
+                }
+                $source .= $item->getValue() . ' ';
+            }
+
+            $message .= $source . PHP_EOL;
+            $message .= str_repeat(' ', $cursorPos) . '^';
+
             throw new SyntaxError($message);
         }
+    }
+
+    private function classDefinition()
+    {
+        $this->pickup(TokenType::T_KEYWORD_CLASS);
+        $token = $this->token;
+        $this->pickup(TokenType::T_IDENTIFIER);
+        $this->pickup(TokenType::T_SET_EQUALS);
+        $this->pickup(TokenType::T_LEFT_BRACE);
+        $this->pickup(TokenType::T_RIGHT_BRACE);
+        return new ClassDefinition($token);
     }
 
     /**
@@ -123,8 +164,12 @@ class Parser
     {
         $statements = [];
         while (!$this->token->is(TokenType::T_EOF)) {
-            $statements[] = $this->statement();
-            $this->pickup(TokenType::T_SEMICOLON);
+            if ($this->token->is(TokenType::T_KEYWORD_CLASS)) {
+                $statements[] = $this->classDefinition();
+            } else {
+                $statements[] = $this->statement();
+                $this->pickup(TokenType::T_SEMICOLON);
+            }
         }
         return $statements;
     }

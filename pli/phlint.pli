@@ -1,8 +1,6 @@
+diff = 11;
+age = 23 - (1 + diff) * 2;
 
+class User = {}
 
-a = 2;
-b = 3;
-sum = 1 + a * b;
-print(sum);
-print(sum * 7);
-
+print(age);

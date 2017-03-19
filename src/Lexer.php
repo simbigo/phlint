@@ -226,6 +226,12 @@ class Lexer
                 case ')':
                     $this->readChar();
                     return $this->makeToken(TokenType::T_RIGHT_PARENTHESIS, ')');
+                case '{':
+                    $this->readChar();
+                    return $this->makeToken(TokenType::T_LEFT_BRACE, '{');
+                case '}':
+                    $this->readChar();
+                    return $this->makeToken(TokenType::T_RIGHT_BRACE, '}');
             }
 
             if ($this->isDigit($this->currentChar)) {
