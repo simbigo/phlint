@@ -68,6 +68,15 @@ class Lexer
     }
 
     /**
+     * @param $char
+     * @return bool
+     */
+    private function isAlpha($char)
+    {
+        return ctype_alpha($char);
+    }
+
+    /**
      * @param string $char
      * @return bool
      */
@@ -139,6 +148,19 @@ class Lexer
     }
 
     /**
+     * @return string
+     */
+    private function readWord()
+    {
+        $result = '';
+        while (!$this->endOfSource() && ($this->isAlpha($this->currentChar) || $this->currentChar === '_')) {
+            $result .= $this->currentChar;
+            $this->readChar();
+        }
+        return $result;
+    }
+
+    /**
      *
      */
     private function skipWhitespace()
@@ -161,6 +183,17 @@ class Lexer
 
             if ($this->isDigit($this->currentChar)) {
                 return $this->makeToken(TokenType::T_NUMBER, $this->readNumber());
+            }
+            if ($this->isAlpha($this->currentChar)) {
+                return $this->makeToken(TokenType::T_VARIABLE, $this->readWord());
+            }
+            if ($this->currentChar === '=') {
+                $this->readChar();
+                return $this->makeToken(TokenType::T_SET_EQUALS, '=');
+            }
+            if ($this->currentChar === ';') {
+                $this->readChar();
+                return $this->makeToken(TokenType::T_SEMICOLON, ';');
             }
             if ($this->currentChar === '+') {
                 $this->readChar();

@@ -5,7 +5,9 @@ namespace Simbigo\Phlint;
 use Simbigo\Phlint\AST\ASTNode;
 use Simbigo\Phlint\AST\BinaryOperation;
 use Simbigo\Phlint\AST\Number;
+use Simbigo\Phlint\AST\VariableAccessor;
 use Simbigo\Phlint\Exceptions\InternalError;
+use Simbigo\Phlint\Exceptions\SyntaxError;
 use Simbigo\Phlint\Tokens\TokenType;
 
 /**
@@ -13,6 +15,11 @@ use Simbigo\Phlint\Tokens\TokenType;
  */
 class Interpreter
 {
+    /**
+     * @var array
+     */
+    private $variableMap = [];
+
     /**
      * @param BinaryOperation $node
      * @return float|int|mixed
@@ -49,6 +56,8 @@ class Interpreter
             return $this->visitBinaryOperationNode($node);
         } elseif ($node instanceof Number) {
             return $this->visitNumberNode($node);
+        } elseif ($node instanceof VariableAccessor) {
+            return $this->visitVariableAccessorNode($node);
         }
 
         throw new InternalError('Unknown node type: ' . get_class($node));
@@ -64,12 +73,31 @@ class Interpreter
     }
 
     /**
+     * @param VariableAccessor $node
+     * @return mixed
+     * @throws SyntaxError
+     */
+    private function visitVariableAccessorNode(VariableAccessor $node)
+    {
+        $variableName = $node->getVariable()->getValue();
+        if ($node->getAction() === VariableAccessor::ACTION_SET) {
+            $this->variableMap[$variableName] = $this->visitNode($node->getValue());
+            return null;
+        }
+
+        if (!array_key_exists($variableName, $this->variableMap)) {
+            throw new SyntaxError('Undefined variable "' . $variableName . '"');
+        }
+        return $this->variableMap[$variableName];
+    }
+
+    /**
      * @param ASTNode[] $statements
      */
     public function evaluate(array $statements)
     {
         foreach ($statements as $statement) {
-            echo $this->visitNode($statement) . PHP_EOL;
+            $this->visitNode($statement);
         }
     }
 }

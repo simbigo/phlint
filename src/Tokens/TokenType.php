@@ -15,4 +15,10 @@ class TokenType
     const T_DIV = 5;
     const T_LEFT_PARENTHESIS = 6;
     const T_RIGHT_PARENTHESIS = 7;
+    const T_COMMENT = 8;
+    const T_VARIABLE = 9;
+    const T_SET_EQUALS = 10;
+    const T_SEMICOLON = 11;
+    const T_FUNCTION = 12;
+    const T_UNDERSCORE = 13;
 }

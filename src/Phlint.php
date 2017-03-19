@@ -7,6 +7,7 @@ use Simbigo\Phlint\AST\BinaryOperation;
 use Simbigo\Phlint\AST\Number;
 use Simbigo\Phlint\Exceptions\ParseError;
 use Simbigo\Phlint\Exceptions\SyntaxError;
+use Simbigo\Phlint\Tokens\Token;
 
 /**
  * Class Phlint
@@ -47,6 +48,21 @@ class Phlint
     }
 
     /**
+     * @param Token[] $tokens
+     */
+    private function printTokens($tokens)
+    {
+        foreach ($tokens as $token) {
+            echo 'Token: {' . PHP_EOL;
+            echo '    type: ' . $token->getType() . PHP_EOL;
+            echo '    value: ' . $token->getValue() . PHP_EOL;
+            echo '    line: ' . $token->getLine() . PHP_EOL;
+            echo '    position: ' . $token->getPos() . PHP_EOL;
+            echo '}' . PHP_EOL;
+        }
+    }
+
+    /**
      * @param $arguments
      * @return int|string
      */
@@ -74,6 +90,7 @@ class Phlint
     {
         try {
             $tokens = $this->lexer->tokenize($source);
+            //$this->printTokens($tokens); exit;
             $statements = $this->parser->parse($tokens);
             $this->interpreter->evaluate($statements);
         } catch (Exception $e) {
