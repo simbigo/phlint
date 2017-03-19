@@ -87,6 +87,23 @@ print(sum);
 print(sum * 8);
 ```
 
+### Flow control
+
+```
+foo = 11
+if foo > getValue(5 + 5) {
+    bar = 1;
+} else {
+    bar = 0;
+}
+
+if bar == 0 {
+    foo = foo + 4;
+}
+```
+
 ### Classes
 
+```
 class Drink = {}
+```
