@@ -59,7 +59,7 @@ class Lexer
         $message .= 'Line: ' . ($this->line + 1) . PHP_EOL;
         $message .= 'Position: ' . $this->linePos . PHP_EOL . PHP_EOL;
         $message .= $line . PHP_EOL;
-        $message .= str_repeat(' ', $this->linePos) . '^';
+        $message .= str_repeat(' ', $this->linePos - 1) . '^';
 
         throw new ParseError($message);
     }
@@ -222,7 +222,7 @@ class Lexer
                 return $this->makeToken(TokenType::T_RIGHT_PARENTHESIS, ')');
             }
 
-            $this->error('Unknown character "' . $this->currentChar . '"');
+            $this->error();
         }
 
         return $this->makeToken(TokenType::T_EOF, null);
@@ -234,7 +234,7 @@ class Lexer
      */
     public function tokenize(string $source)
     {
-        $this->source = $source;
+        $this->source = rtrim($source);
         $this->pos = -1;
         $this->line = 0;
         $this->linePos = -1;

@@ -1,5 +1,6 @@
 <?php
 
+use Simbigo\Phlint\Configuration\IniConfiguration;
 use Simbigo\Phlint\Interpreter;
 use Simbigo\Phlint\Lexer;
 use Simbigo\Phlint\Parser;
@@ -13,7 +14,12 @@ spl_autoload_register(function ($className) {
         require $classPath;
     }
 });
-$phlint = new Phlint(new Interpreter(), new Parser(), new Lexer());
+
 array_shift($argv);
+
+$config = new IniConfiguration();
+$config->read('phlint.ini');
+$phlint = new Phlint($config, new Interpreter(), new Parser(), new Lexer());
 $exitCode = $phlint->run($argv);
+
 exit($exitCode);

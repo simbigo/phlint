@@ -3,8 +3,8 @@
 namespace Simbigo\Phlint;
 
 use Exception;
-use Simbigo\Phlint\AST\BinaryOperation;
-use Simbigo\Phlint\AST\Number;
+use Simbigo\Phlint\Configuration\BaseConfiguration;
+use Simbigo\Phlint\Core\IPhlintExtension;
 use Simbigo\Phlint\Core\PrintPhlintFunction;
 use Simbigo\Phlint\Exceptions\ParseError;
 use Simbigo\Phlint\Exceptions\SyntaxError;
@@ -15,6 +15,10 @@ use Simbigo\Phlint\Tokens\Token;
  */
 class Phlint
 {
+    /**
+     * @var BaseConfiguration
+     */
+    private $configuration;
     /**
      * @var array
      */
@@ -31,21 +35,32 @@ class Phlint
      * @var string
      */
     private $prompt = '[phlint]: ';
+    /**
+     * @var IPhlintExtension[]
+     */
+    private $extensions = [];
+
 
     /**
      * Phlint constructor.
      *
+     * @param BaseConfiguration $configuration
      * @param Interpreter $interpreter
      * @param Parser $parser
      * @param Lexer $lexer
      */
-    public function __construct(Interpreter $interpreter, Parser $parser, Lexer $lexer)
-    {
+    public function __construct(
+        BaseConfiguration $configuration,
+        Interpreter $interpreter,
+        Parser $parser,
+        Lexer $lexer
+    ) {
         mb_internal_encoding('UTF-8');
 
         $this->interpreter = $interpreter;
         $this->parser = $parser;
         $this->lexer = $lexer;
+        $this->configuration = $configuration;
         $this->configure();
     }
 
@@ -54,7 +69,26 @@ class Phlint
      */
     private function configure()
     {
-        $this->interpreter->registerFunction(new PrintPhlintFunction());
+        $this->loadExtensions();
+    }
+
+    private function loadExtensions()
+    {
+        $extensions = $this->configuration->get('extensions');
+        foreach ($extensions as $extensionName => $extensionClass) {
+            $this->loadExtension($extensionName, $extensionClass);
+        }
+    }
+
+    /**
+     * @param string $name
+     * @param string|IPhlintExtension $extension
+     */
+    public function loadExtension($name, $extension)
+    {
+        $extensionInstance = is_string($extension) ? new $extension() : $extension;
+        $this->extensions[$name] = $extensionInstance;
+        $extensionInstance->load($this->interpreter);
     }
 
     /**

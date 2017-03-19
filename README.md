@@ -72,3 +72,27 @@ equal:
 a = 3 + 4;
 b = 2 * a
 ```
+
+### Functions
+
+```
+a = 2;
+sum = 3 + a;
+print(sum);
+print(sum * 8);
+```
+
+### Script
+
+class Drink = {
+    prop ml = 500;
+    
+    method
+}
+
+class Coffee = {
+
+}
+
+sugarLimit = 3;
+cupOfCoffee = 

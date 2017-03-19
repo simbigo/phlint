@@ -1,6 +1,8 @@
 <?php
 
-namespace Simbigo\Phlint\Core;
+namespace Simbigo\Phlint\Extensions\IO;
+
+use Simbigo\Phlint\Core\PhlintFunction;
 
 class PrintPhlintFunction extends PhlintFunction
 {
