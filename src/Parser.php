@@ -4,6 +4,7 @@ namespace Simbigo\Phlint;
 
 use Simbigo\Phlint\AST\ASTNull;
 use Simbigo\Phlint\AST\BinaryOperation;
+use Simbigo\Phlint\AST\FunctionCall;
 use Simbigo\Phlint\AST\Number;
 use Simbigo\Phlint\AST\VariableAccessor;
 use Simbigo\Phlint\Exceptions\SyntaxError;
@@ -50,7 +51,7 @@ class Parser
     }
 
     /**
-     * @return BinaryOperation|\Simbigo\Phlint\AST\Number|VariableAccessor
+     * @return BinaryOperation|\Simbigo\Phlint\AST\Number|VariableAccessor|FunctionCall
      */
     private function factor()
     {
@@ -66,9 +67,27 @@ class Parser
         } elseif ($token->is(TokenType::T_VARIABLE)) {
             $this->pickup(TokenType::T_VARIABLE);
             return new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
+        }  elseif ($token->is(TokenType::T_VARIABLE)) {
+            $this->pickup(TokenType::T_VARIABLE);
+            return new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
+        } elseif ($token->is(TokenType::T_FUNCTION)) {
+            return $this->functionCall();
         }
 
         return null;
+    }
+
+    /**
+     * @return FunctionCall
+     */
+    private function functionCall()
+    {
+        $token = $this->token;
+        $this->pickup(TokenType::T_FUNCTION);
+        $this->pickup(TokenType::T_LEFT_PARENTHESIS);
+        $node = $this->expression();
+        $this->pickup(TokenType::T_RIGHT_PARENTHESIS);
+        return new FunctionCall($token, $node);
     }
 
     /**
@@ -126,7 +145,11 @@ class Parser
      */
     private function statement()
     {
-        $node = $this->setter();
+        if ($this->token->is(TokenType::T_VARIABLE)) {
+            $node = $this->setter();
+        } else {
+            $node = $this->functionCall();
+        }
         return $node;
     }
 

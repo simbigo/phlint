@@ -4,6 +4,7 @@ namespace Simbigo\Phlint;
 
 use Simbigo\Phlint\AST\ASTNode;
 use Simbigo\Phlint\AST\BinaryOperation;
+use Simbigo\Phlint\AST\FunctionCall;
 use Simbigo\Phlint\AST\Number;
 use Simbigo\Phlint\AST\VariableAccessor;
 use Simbigo\Phlint\Core\PhlintFunction;
@@ -24,16 +25,6 @@ class Interpreter
      * @var array
      */
     private $variableMap = [];
-
-    /**
-     * @param $functionName
-     * @param $arguments
-     * @return mixed
-     */
-    private function callFunction($functionName, $arguments)
-    {
-        return $this->functionMap[$functionName]->call($arguments);
-    }
 
     /**
      * @param BinaryOperation $node
@@ -61,6 +52,20 @@ class Interpreter
     }
 
     /**
+     * @param FunctionCall $node
+     * @return mixed
+     * @throws SyntaxError
+     */
+    private function visitFunctionCallNode(FunctionCall $node)
+    {
+        $functionName = $node->getFunction()->getValue();
+        if (!array_key_exists($functionName, $this->functionMap)) {
+            throw new SyntaxError('Undefined function "' . $functionName . '"');
+        }
+        return $this->functionMap[$functionName]->call($this->visitNode($node->getArgument()));
+    }
+
+    /**
      * @param ASTNode|BinaryOperation|Number $node
      * @return float|int|mixed
      * @throws InternalError
@@ -73,7 +78,10 @@ class Interpreter
             return $this->visitNumberNode($node);
         } elseif ($node instanceof VariableAccessor) {
             return $this->visitVariableAccessorNode($node);
+        } elseif ($node instanceof FunctionCall) {
+            return $this->visitFunctionCallNode($node);
         }
+
 
         throw new InternalError('Unknown node type: ' . get_class($node));
     }
