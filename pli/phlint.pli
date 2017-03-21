@@ -10,3 +10,38 @@ if age < 20 {
 print(age + bar);
 
 class User = {}
+
+namespace PhlintApplication;
+
+import Phlint.Web.Application -> WebApplication;
+import Phlint.Http.Request;
+
+class Application = WebApplication.extend({
+
+        public method run() = {
+
+        }
+});
+
+config = IniFile.instance("phlint-app.ini");
+request = Request.instance();
+app = Application.instance(config, request);
+response = app.run();
+response.send();
+
+func getAge() = {
+
+}
+
+class UserController = AppController.extend({
+
+    prop:public bracket = "[";
+
+    method:public:static:final actionProfile(request, response) = {
+        response.Format = response.FORMAT_XML;
+        response.Write;
+        return response;
+    }
+
+    protected : mySuperMethod()
+});

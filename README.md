@@ -23,45 +23,66 @@ Hello
 ## Backus–Naur form
 
 ```
-<PROGRAM>                 ::= (<CLASS_DEFINITION>|<IF_CONDITION>|<STATEMENT_LIST>)*
-<CLASS_DEFINITION>        ::= "class" <IDENTIFIER> "=" "{" "}"
-<IF_CONDITION>            ::= "if" <CONSTRUCTION_CONDITION> "{" <PROGRAM> "}" ("else" "{" <PROGRAM> "}")?
-<CONSTRUCTION_CONDITION>  ::= <EXPRESSION> <COMPARE_OP> <EXPRESSION>
-<STATEMENT_LIST>          ::= <STATEMENT> ";" (<STATEMENT> ";")*
-<STATEMENT>               ::= <SETTER>|<CALL_FUNCTION>
-<COMPARE_OP>              ::= ">"|"<"|"=="|">="|"<="|"!="
-<SETTER>                  ::= <VARIABLE> "=" <EXPRESSION>
-<CALL_FUNCTION>           ::= <FUNCTION_NAME> "(" <NUMBER> ")"
-<VARIABLE>                ::= <IDENTIFIER>
-<FUNCTION_NAME>           ::= <IDENTIFIER>
-<EXPRESSION>              ::= <TERM> (<PM_OPERATOR> <TERM>)*
-<TERM>                    ::= <FACTOR> (<MD_OPERATOR> <FACTOR>)*
-<FACTOR>                  ::= <NUMBER>|("(" <EXPRESSION> ")")
-<PM_OPERATOR>             ::= "+"|"-"
-<MD_OPERATOR>             ::= "*"|"/"
-<NUMBER>                  ::= <INTEGER>|<FLOAT>
-<INTEGER>                 ::= <DIGIT>(<DIGIT>)*
-<FLOAT>                   ::= <INTEGER>("."<INTEGER>)
-<DIGIT>                   ::= 0|1|2|3|4|5|6|7|8|9
-<IDENTIFIER>              ::= (<ALPHA>|"_")(<ALPHA>|"_")*
-<ALPHA>                   ::= A..z
+program                  = (declaration | class_declaration)*
+                          
+declaration              = statement
+                         | var_declaration 
+                         | function_declaration 
+      
+statement                = statement_expr
+                         | if_statement 
+                         | while_statement 
+                         | for_statement
+                         | return_statement
+           
+class_declaration        = "class" identifier "=" (class_block | extend_block)
+class_block              = "{" class_body "}"
+extend_block             = identifier "." "extend" "(" "{" class_body "}" ")"
+class_body               = (prop_declaration | method_declaration)*
+prop_declaration         = "prop" modifiers var_declaration
+modifiers                = ":" visible_mod (":" "static")?
+method_declaration       = "prop" modifiers function_declaration
+visible_mod              = "private" | "protected" | "public"
+   
+variable_declaration     = identifier "=" statement_expr
+
+function_declaration     = "func" identifier function "=" "{" declaration* "}"
+function                 = identifier "(" arguments?  ")"
+arguments                = argument ("," argument)*
+argument                 = expression
+
+statement_expr           = expression ";"
+expression               = term (plus_minus term)*
+term                     = factor (mul_div factor)*
+factor                   = number | expression 
+
+string                   = ('"' ...* '"' ) | ("'" ...* "'" )
+number                   = integer | float
+float                    = integer "." integer
+integer                  = digit ("." digit)*
+digit                    = "0" ... "9"
+indentifier              = alpha | "_" (alpha | "_")*
+alpha                    = "A" ... "z"
+compare                  = ">" | "<" | "==" | ">=" | "<=" | "!="
+plus_minus               = "+" | "-"
+mul_div                  = "*" | "/"
 ```
 
 ### Whitespaces
 
-Ignore whitespace if it isn't a part of a string.
+All spaces are ignored if they are not part of the string
 
-```c
+```java
 4     +    4
 ```
 equal:
-```c
+```java
 4+4
 ```
 
 ### Expressions
 
-```c
+```java
 3 + 2;
 6 - 4;
 2 * 5;
@@ -70,26 +91,30 @@ equal:
 (2 + 2 * 3) - 10 * (2 * (6 + 4));
 ```
 
-
 ### Variables
 
-```c
+```java
 a = 3 + 4;
 b = 2 * a
 ```
 
 ### Functions
 
-```c
-a = 2;
-sum = 3 + a;
-print(sum);
-print(sum * 8);
+```java
+func sum(a, b) = {
+    func inc(c) = {
+        return c + 1;
+    }
+    return inc(a) + inc(b);
+}
+
+result = sum(4, 5)
+print(result);
 ```
 
-### Flow control
+### Control flow
 
-```c
+```java
 foo = 11
 if foo > getValue(5 + 5) {
     bar = 1;
@@ -100,10 +125,32 @@ if foo > getValue(5 + 5) {
 if bar == 0 {
     foo = foo + 4;
 }
+
+i = 10
+while (i > 0) {
+    print(i);
+    i = i - 1;
+}
 ```
 
 ### Classes
 
 ```c
-class Drink = {}
+class Animal = {
+   prop:protected age = 4;
+   
+   method:public:static say() = {
+        print("Rrrrrr");
+   }
+}
+
+class Cat = Animal.extend({
+    method:public getAge() = {
+        return this.age;
+    }
+    
+    method:public:static say() = {
+        parent.say();
+    }
+})
 ```
