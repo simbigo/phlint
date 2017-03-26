@@ -33,6 +33,15 @@ class Parser
      * @var Token[]
      */
     private $tokens;
+    /**
+     * @var
+     */
+    private $verbose;
+
+    public function __construct($verbose)
+    {
+        $this->verbose = $verbose;
+    }
 
     /**
      * @return ClassDefinition
@@ -64,17 +73,7 @@ class Parser
      */
     private function expression()
     {
-        if ($this->token->is(TokenType::T_IDENTIFIER)) {
-            $token = $this->token;
-            if ($this->seeNext()->is(TokenType::T_LEFT_PARENTHESIS)) {
-                $node = $this->functionCall();
-            } else {
-                $this->pickup(TokenType::T_IDENTIFIER);
-                $node = new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
-            }
-        } else {
-            $node = $this->term();
-        }
+        $node = $this->term();
 
         while ($this->token->isIn([TokenType::T_PLUS, TokenType::T_MINUS])) {
             $token = $this->token;
@@ -84,7 +83,19 @@ class Parser
                 $this->pickup(TokenType::T_MINUS);
             }
 
-            $node = new BinaryOperation($token, $node, $this->term());
+
+            if ($this->token->is(TokenType::T_IDENTIFIER)) {
+                $token = $this->token;
+                if ($this->seeNext()->is(TokenType::T_LEFT_PARENTHESIS)) {
+                    $right = $this->functionCall();
+                } else {
+                    $this->pickup(TokenType::T_IDENTIFIER);
+                    $right = new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
+                }
+            } else {
+                $right = $this->term();
+            }
+            $node = new BinaryOperation($token, $node, $right);
         }
 
         return $node;
@@ -104,6 +115,13 @@ class Parser
             $node = $this->expression();
             $this->pickup(TokenType::T_RIGHT_PARENTHESIS);
             return $node;
+        } elseif ($token->is(TokenType::T_IDENTIFIER)) {
+            if ($this->seeNext()->is(TokenType::T_LEFT_PARENTHESIS)) {
+                return $this->functionCall();
+            } else {
+                $this->pickup(TokenType::T_IDENTIFIER);
+                return new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
+            }
         }
 
         return null;
@@ -295,6 +313,13 @@ class Parser
         return $node;
     }
 
+    private function statementExpression()
+    {
+        $expression = $this->expression();
+        $this->pickup(TokenType::T_SEMICOLON);
+        return $expression;
+    }
+
     /**
      * @return Number|BinaryOperation
      */
@@ -320,13 +345,6 @@ class Parser
         $this->pickup(TokenType::T_IDENTIFIER);
         $this->pickup(TokenType::T_SET_EQUALS);
         return new VariableAccessor($variable, $this->statementExpression(), VariableAccessor::ACTION_SET);
-    }
-
-    private function statementExpression()
-    {
-        $expression = $this->expression();
-        $this->pickup(TokenType::T_SEMICOLON);
-        return $expression;
     }
 
     /**

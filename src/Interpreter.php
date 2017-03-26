@@ -53,6 +53,16 @@ class Interpreter
         throw new InternalError($message);
     }
 
+    private function visitCallFunctionArgNode(CallFunctionArg $argument)
+    {
+        return $this->visitNode($argument->getValue());
+    }
+
+    private function visitClassDefinitionNode(ClassDefinition $node)
+    {
+        return null;
+    }
+
     /**
      * @param ASTFunction $node
      * @return mixed
@@ -107,11 +117,6 @@ class Interpreter
         throw new InternalError('Unknown node type: ' . get_class($node));
     }
 
-    private function visitClassDefinitionNode(ClassDefinition $node)
-    {
-        return null;
-    }
-
     /**
      * @param \Simbigo\Phlint\AST\Number|Number $node
      * @return float|int
@@ -119,11 +124,6 @@ class Interpreter
     private function visitNumberNode(Number $node)
     {
         return $node->getValue()->getValue();
-    }
-
-    private function visitCallFunctionArgNode(CallFunctionArg $argument)
-    {
-        return $this->visitNode($argument->getValue());
     }
 
     /**

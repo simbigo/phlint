@@ -19,7 +19,7 @@ array_shift($argv);
 
 $config = new IniConfiguration();
 $config->read('phlint.ini');
-$phlint = new Phlint($config, new Interpreter(), new Parser(), new Lexer());
+$phlint = new Phlint($config, new Interpreter(), new Parser((bool)array_search('-v', $argv)), new Lexer());
 $exitCode = $phlint->run($argv);
 
 exit($exitCode);
