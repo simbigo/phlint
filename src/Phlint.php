@@ -93,33 +93,13 @@ class Phlint
     }
 
     /**
-     * @param Token $token
-     * @param bool $short
-     */
-    public function dumpToken(Token $token, $short = false)
-    {
-        if ($short) {
-            echo 'Token: { name: ' . TokenType::getName($token->getType()) . ' }' . PHP_EOL;
-        } else {
-            echo 'Token: {' . PHP_EOL;
-            echo '    type: ' . $token->getType() . PHP_EOL;
-            echo '    name: ' . TokenType::getName($token->getType()) . PHP_EOL;
-            echo '    value: ' . $token->getValue() . PHP_EOL;
-            echo '    line: ' . $token->getLine() . PHP_EOL;
-            echo '    position: ' . $token->getPos() . PHP_EOL;
-            echo '}' . PHP_EOL;
-        }
-    }
-
-    /**
      * @param Token[] $tokens
      * @param bool $short
      */
     public function dumpTokens(array $tokens, $short = false)
     {
-        foreach ($tokens as $token) {
-            $this->dumpToken($token, $short);
-        }
+        $printer = new TokenPrinter();
+        $printer->printTokens($tokens, TokenPrinter::FORMAT_SOURCE_NODE);
     }
 
     /**
@@ -150,7 +130,7 @@ class Phlint
     {
         try {
             $tokens = $this->lexer->tokenize($source);
-            //$this->dumpTokens($tokens, true); exit;
+            $this->dumpTokens($tokens); exit;
             $statements = $this->parser->parse($tokens);
             $this->interpreter->evaluate($statements);
         } catch (Exception $e) {
