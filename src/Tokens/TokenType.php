@@ -33,6 +33,7 @@ class TokenType
     const T_KEYWORD_CLASS = 21;
     const T_KEYWORD_IF = 22;
     const T_KEYWORD_ELSE = 23;
+    const T_KEYWORD_FUNC = 24;
 
 
     private static $constants;

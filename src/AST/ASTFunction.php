@@ -4,8 +4,22 @@ namespace Simbigo\Phlint\AST;
 
 use Simbigo\Phlint\Tokens\Token;
 
-class FunctionCall extends ASTNode
+class ASTFunction extends ASTNode
 {
+    const ACTION_DECLARE = 'declare';
+    const ACTION_CALL = 'call';
+    /**
+     * @var string
+     */
+    private $action;
+
+    /**
+     * @return string
+     */
+    public function getAction(): string
+    {
+        return $this->action;
+    }
     /**
      * @var ASTNode
      */
@@ -18,13 +32,15 @@ class FunctionCall extends ASTNode
     /**
      * VariableAccessor constructor.
      *
-     * @param Token $function
+     * @param Token $functionName
      * @param ASTNode $argument
+     * @param string $action
      */
-    public function __construct(Token $function, ASTNode $argument)
+    public function __construct(Token $functionName, $action = self::ACTION_CALL, ASTNode $argument = null)
     {
-        $this->function = $function;
+        $this->function = $functionName;
         $this->argument = $argument;
+        $this->action = $action;
     }
 
     /**

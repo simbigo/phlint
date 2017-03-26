@@ -19,6 +19,7 @@ class Lexer
     const KEYWORD_CLASS = 'class';
     const KEYWORD_IF = 'if';
     const KEYWORD_ELSE = 'else';
+    const KEYWORD_FUNC = 'func';
 
     /**
      * @var string
@@ -32,6 +33,7 @@ class Lexer
         self::KEYWORD_CLASS => TokenType::T_KEYWORD_CLASS,
         self::KEYWORD_IF => TokenType::T_KEYWORD_IF,
         self::KEYWORD_ELSE => TokenType::T_KEYWORD_ELSE,
+        self::KEYWORD_FUNC => TokenType::T_KEYWORD_FUNC,
     ];
 
     /**

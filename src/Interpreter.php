@@ -2,10 +2,10 @@
 
 namespace Simbigo\Phlint;
 
+use Simbigo\Phlint\AST\ASTFunction;
 use Simbigo\Phlint\AST\ASTNode;
 use Simbigo\Phlint\AST\BinaryOperation;
 use Simbigo\Phlint\AST\ClassDefinition;
-use Simbigo\Phlint\AST\FunctionCall;
 use Simbigo\Phlint\AST\Number;
 use Simbigo\Phlint\AST\VariableAccessor;
 use Simbigo\Phlint\Core\PhlintFunction;
@@ -53,13 +53,18 @@ class Interpreter
     }
 
     /**
-     * @param FunctionCall $node
+     * @param ASTFunction $node
      * @return mixed
      * @throws SyntaxError
      */
-    private function visitFunctionCallNode(FunctionCall $node)
+    private function visitFunctionNode(ASTFunction $node)
     {
         $functionName = $node->getFunction()->getValue();
+        if ($node->getAction() === ASTFunction::ACTION_DECLARE) {
+            $this->functionMap[$functionName] = $node;
+            return null;
+        }
+
         if (!array_key_exists($functionName, $this->functionMap)) {
             throw new SyntaxError('Undefined function "' . $functionName . '"');
         }
@@ -79,8 +84,8 @@ class Interpreter
             return $this->visitNumberNode($node);
         } elseif ($node instanceof VariableAccessor) {
             return $this->visitVariableAccessorNode($node);
-        } elseif ($node instanceof FunctionCall) {
-            return $this->visitFunctionCallNode($node);
+        } elseif ($node instanceof ASTFunction) {
+            return $this->visitFunctionNode($node);
         } elseif ($node instanceof ClassDefinition) {
             return $this->visitClassDefinitionNode($node);
         }

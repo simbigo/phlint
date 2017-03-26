@@ -2,6 +2,7 @@
 
 namespace Simbigo\Phlint;
 
+use Simbigo\Phlint\AST\ASTFunction;
 use Simbigo\Phlint\AST\ASTNull;
 use Simbigo\Phlint\AST\BinaryOperation;
 use Simbigo\Phlint\AST\ClassDefinition;
@@ -34,7 +35,7 @@ class Parser
     /**
      * @return ClassDefinition
      */
-    private function classDefinition()
+    private function classDeclaration()
     {
         $this->pickup(TokenType::T_KEYWORD_CLASS);
         $token = $this->token;
@@ -43,6 +44,35 @@ class Parser
         $this->pickup(TokenType::T_LEFT_BRACE);
         $this->pickup(TokenType::T_RIGHT_BRACE);
         return new ClassDefinition($token);
+    }
+
+    private function functionDeclaration()
+    {
+        $this->pickup(TokenType::T_KEYWORD_FUNC);
+        $nameToken = $this->token;
+        $this->pickup(TokenType::T_IDENTIFIER);
+        $this->pickup(TokenType::T_LEFT_PARENTHESIS);
+        $this->pickup(TokenType::T_RIGHT_PARENTHESIS);
+        $this->pickup(TokenType::T_SET_EQUALS);
+        $this->pickup(TokenType::T_LEFT_BRACE);
+        $this->pickup(TokenType::T_RIGHT_BRACE);
+        return new ASTFunction($nameToken, ASTFunction::ACTION_DECLARE);
+    }
+
+    private function varDeclaration()
+    {
+
+    }
+
+    private function declaration()
+    {
+        if ($this->token->is(TokenType::T_KEYWORD_FUNC)) {
+            return $this->functionDeclaration();
+        } elseif ($this->token->is(TokenType::T_IDENTIFIER) && $this->seeNext()->is(TokenType::T_SET_EQUALS)) {
+            return $this->varDeclaration();
+        }
+
+        return $this->statement();
     }
 
     /**
@@ -206,12 +236,9 @@ class Parser
         $statements = [];
         while (!$this->token->is(TokenType::T_EOF)) {
             if ($this->token->is(TokenType::T_KEYWORD_CLASS)) {
-                $statements[] = $this->classDefinition();
-            } elseif ($this->token->is(TokenType::T_KEYWORD_IF)) {
-                $statements[] = $this->ifCondition();
+                $statements[] = $this->classDeclaration();
             } else {
-                $statements[] = $this->statement();
-                $this->pickup(TokenType::T_SEMICOLON);
+                $statements[] = $this->declaration();
             }
         }
         return $statements;
