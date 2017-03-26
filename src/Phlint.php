@@ -96,12 +96,11 @@ class Phlint
 
     /**
      * @param Token[] $tokens
-     * @param bool $short
      */
-    public function dumpTokens(array $tokens, $short = false)
+    public function dumpTokens(array $tokens)
     {
         $printer = new TokenPrinter();
-        $printer->printTokens($tokens, TokenPrinter::FORMAT_SOURCE_NODE);
+        $printer->printTokens($tokens, $this->dumpTokens);
     }
 
     /**

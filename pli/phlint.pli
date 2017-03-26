@@ -1,2 +1,6 @@
 diff = 11;
 foo = 43 - (1 + diff) * 2;
+
+if foo > 4 {
+    print(1);
+}
