@@ -6,6 +6,7 @@ use Simbigo\Phlint\AST\ASTFunction;
 use Simbigo\Phlint\AST\ASTNull;
 use Simbigo\Phlint\AST\BinaryOperation;
 use Simbigo\Phlint\AST\ClassDefinition;
+use Simbigo\Phlint\AST\FunctionArgument;
 use Simbigo\Phlint\AST\FunctionCall;
 use Simbigo\Phlint\AST\IfCondition;
 use Simbigo\Phlint\AST\Number;
@@ -52,6 +53,21 @@ class Parser
         $nameToken = $this->token;
         $this->pickup(TokenType::T_IDENTIFIER);
         $this->pickup(TokenType::T_LEFT_PARENTHESIS);
+        $arguments = [];
+        while ($this->token->getType() !== TokenType::T_RIGHT_PARENTHESIS) {
+            $argumentName = $this->token;
+            $this->pickup(TokenType::T_IDENTIFIER);
+            $defaultValue = null;
+            if ($this->token->is(TokenType::T_SET_EQUALS)) {
+                $this->pickup(TokenType::T_SET_EQUALS);
+                $defaultValue = $this->token;
+                $this->pickup(TokenType::T_NUMBER); // todo allow other types
+            }
+            $arguments[] = new FunctionArgument($argumentName, $defaultValue);
+            if ($this->token->getType() !== TokenType::T_RIGHT_PARENTHESIS) {
+                $this->pickup(TokenType::T_COMA);
+            }
+        }
         $this->pickup(TokenType::T_RIGHT_PARENTHESIS);
         $this->pickup(TokenType::T_SET_EQUALS);
         $this->pickup(TokenType::T_LEFT_BRACE);

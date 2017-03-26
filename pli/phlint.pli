@@ -1,2 +1,3 @@
-func name() = {
+func name(first, second, third = 1) = {
+
 }

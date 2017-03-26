@@ -75,7 +75,7 @@ class Lexer
         $message .= 'Line: ' . ($this->line + 1) . PHP_EOL;
         $message .= 'Position: ' . $this->linePos . PHP_EOL . PHP_EOL;
         $message .= $line . PHP_EOL;
-        $message .= str_repeat(' ', $this->linePos - 1) . '^';
+        $message .= str_repeat(' ', $this->linePos) . '^';
 
         throw new ParseError($message);
     }
@@ -214,6 +214,9 @@ class Lexer
                 case ';':
                     $this->readChar();
                     return $this->makeToken(TokenType::T_SEMICOLON, ';');
+                case ',':
+                    $this->readChar();
+                    return $this->makeToken(TokenType::T_COMA, ',');
                 case '+':
                     $this->readChar();
                     return $this->makeToken(TokenType::T_PLUS, '+');
