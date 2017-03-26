@@ -16,11 +16,22 @@ class Lexer
      */
     const FLOAT_POINTER = '.';
 
+    /**
+     *
+     */
     const KEYWORD_CLASS = 'class';
-    const KEYWORD_IF = 'if';
+    /**
+     *
+     */
     const KEYWORD_ELSE = 'else';
+    /**
+     *
+     */
     const KEYWORD_FUNC = 'func';
-
+    /**
+     *
+     */
+    const KEYWORD_IF = 'if';
     /**
      * @var string
      */
@@ -187,6 +198,16 @@ class Lexer
     }
 
     /**
+     * @param int $offset
+     * @return null|string
+     */
+    private function seeNext($offset = 1)
+    {
+        $offset = $this->pos + $offset;
+        return mb_strlen($this->source) >= $offset ? mb_substr($this->source, $offset, 1) : null;
+    }
+
+    /**
      *
      */
     private function skipWhitespace()
@@ -284,12 +305,6 @@ class Lexer
         }
 
         return $this->makeToken(TokenType::T_EOF, null);
-    }
-
-    private function seeNext($offset = 1)
-    {
-        $offset = $this->pos + $offset;
-        return mb_strlen($this->source) >= $offset ? mb_substr($this->source, $offset, 1) : null;
     }
 
     /**

@@ -1,6 +1,7 @@
 <?php
 
 use Simbigo\Phlint\Configuration\IniConfiguration;
+use Simbigo\Phlint\Environment;
 use Simbigo\Phlint\Interpreter;
 use Simbigo\Phlint\Lexer;
 use Simbigo\Phlint\Parser;
@@ -19,7 +20,7 @@ array_shift($argv);
 
 $config = new IniConfiguration();
 $config->read('phlint.ini');
-$phlint = new Phlint($config, new Interpreter(), new Parser((bool)array_search('-v', $argv)), new Lexer());
+$phlint = new Phlint($config, new Interpreter(), new Parser(), new Lexer(), new Environment());
 $exitCode = $phlint->run($argv);
 
 exit($exitCode);

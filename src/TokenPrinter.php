@@ -5,16 +5,40 @@ namespace Simbigo\Phlint;
 use Simbigo\Phlint\Tokens\Token;
 use Simbigo\Phlint\Tokens\TokenType;
 
+/**
+ * Class TokenPrinter
+ */
 class TokenPrinter
 {
+    /**
+     *
+     */
     const FORMAT_FULL_LIST = 'fullList';
+    /**
+     *
+     */
     const FORMAT_SHORT_LIST = 'shortList';
+    /**
+     *
+     */
     const FORMAT_SOURCE_NODE = 'sourceNode';
+    /**
+     *
+     */
     const FORMAT_SYNTAX_HIGHLIGHT = 'shortList';
 
+    /**
+     * @var
+     */
     protected $currentLine;
+    /**
+     * @var
+     */
     protected $prevTokenLine;
 
+    /**
+     * @param Token $token
+     */
     protected function printFullList(Token $token)
     {
         echo 'Token: {' . PHP_EOL;
@@ -26,11 +50,17 @@ class TokenPrinter
         echo '}' . PHP_EOL;
     }
 
+    /**
+     * @param Token $token
+     */
     protected function printShortList(Token $token)
     {
         echo 'Token: { name: ' . TokenType::getName($token->getType()) . ' }' . PHP_EOL;
     }
 
+    /**
+     * @param Token $token
+     */
     protected function printSourceNode(Token $token)
     {
         if ($token->getLine() !== $this->prevTokenLine) {

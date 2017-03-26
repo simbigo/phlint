@@ -9,9 +9,11 @@ use Simbigo\Phlint\AST\CallFunctionArg;
 use Simbigo\Phlint\AST\ClassDefinition;
 use Simbigo\Phlint\AST\Number;
 use Simbigo\Phlint\AST\VariableAccessor;
-use Simbigo\Phlint\Core\PhlintFunction;
+use Simbigo\Phlint\Core\UserFunction;
 use Simbigo\Phlint\Exceptions\InternalError;
+use Simbigo\Phlint\Exceptions\PhlintException;
 use Simbigo\Phlint\Exceptions\SyntaxError;
+use Simbigo\Phlint\Tokens\Token;
 use Simbigo\Phlint\Tokens\TokenType;
 
 /**
@@ -20,13 +22,9 @@ use Simbigo\Phlint\Tokens\TokenType;
 class Interpreter
 {
     /**
-     * @var PhlintFunction[]
+     * @var Environment
      */
-    private $functionMap = [];
-    /**
-     * @var array
-     */
-    private $variableMap = [];
+    private $environment;
 
     /**
      * @param BinaryOperation $node
@@ -53,11 +51,19 @@ class Interpreter
         throw new InternalError($message);
     }
 
+    /**
+     * @param CallFunctionArg $argument
+     * @return float|int|mixed
+     */
     private function visitCallFunctionArgNode(CallFunctionArg $argument)
     {
         return $this->visitNode($argument->getValue());
     }
 
+    /**
+     * @param ClassDefinition $node
+     * @return null
+     */
     private function visitClassDefinitionNode(ClassDefinition $node)
     {
         return null;
@@ -66,31 +72,40 @@ class Interpreter
     /**
      * @param ASTFunction $node
      * @return mixed
-     * @throws SyntaxError
+     * @throws PhlintException
      */
     private function visitFunctionNode(ASTFunction $node)
     {
         $functionName = $node->getFunction()->getValue();
         if ($node->getAction() === ASTFunction::ACTION_DECLARE) {
-            $this->functionMap[$functionName] = $node;
+            $function = new UserFunction($functionName, $node->getStatements());
+            foreach ($node->getArguments() as $argument) {
+                $defaultValue = $argument->getValue();
+                $function->defineArgument($argument->getName(), $defaultValue === null, $defaultValue);
+            }
+            $this->environment->assignFunction($functionName, $function);
             return null;
         }
 
-        if (!array_key_exists($functionName, $this->functionMap)) {
-            throw new SyntaxError('Undefined function "' . $functionName . '"');
-        }
-        $arguments = [];
-        $named = [];
-        foreach ($node->getArguments() as $argument) {
-            $name = $argument->getName();
-            $argumentValue = $this->visitNode($argument);
-            if ($name === null) {
-                $arguments[] = $argumentValue;
+        $arguments = $node->getArguments();
+        $functionArguments = $this->environment->getFunction($functionName)->getDefinedArguments();
+        $functionEnvironment = $this->environment->createLocalEnvironment();
+        foreach ($functionArguments as $index => $functionArgument) {
+            if (!isset($arguments[$index])) {
+                if (!isset($functionArgument[1])) {
+                    throw new PhlintException('Invalid arguments number.');
+                }
+                $argumentValue = $functionArgument[1];
             } else {
-                $named[$name->getValue()] = $argumentValue;
+                $argumentValue = $this->visitNode($arguments[$index]);
             }
+            $argumentName = $functionArgument[0];
+            if ($argumentName instanceof Token) {
+                $argumentName = $argumentName->getValue();
+            }
+            $functionEnvironment->assignVariable($argumentName, $argumentValue);
         }
-        return $this->functionMap[$functionName]->call($arguments, $named);
+        return $this->environment->getFunction($functionName)->call($this, $functionEnvironment);
     }
 
     /**
@@ -135,31 +150,33 @@ class Interpreter
     {
         $variableName = $node->getVariable()->getValue();
         if ($node->getAction() === VariableAccessor::ACTION_SET) {
-            $this->variableMap[$variableName] = $this->visitNode($node->getValue());
+            $this->environment->assignVariable($variableName, $this->visitNode($node->getValue()));
             return null;
         }
 
-        if (!array_key_exists($variableName, $this->variableMap)) {
-            throw new SyntaxError('Undefined variable "' . $variableName . '"');
-        }
-        return $this->variableMap[$variableName];
+        return $this->environment->getVariable($variableName);
     }
 
     /**
+     * @param Environment $environment
      * @param ASTNode[] $statements
      */
-    public function evaluate(array $statements)
+    public function evaluate(Environment $environment, array $statements)
     {
+        #$global = $this->environment;
+        $this->environment = $environment;
+        #var_dump($environment);
         foreach ($statements as $statement) {
             $this->visitNode($statement);
         }
+        #$this->environment = $global;
     }
 
     /**
-     * @param PhlintFunction $function
+     * @param Environment $environment
      */
-    public function registerFunction(PhlintFunction $function)
+    public function setEnvironment(Environment $environment)
     {
-        $this->functionMap[$function->getName()] = $function;
+        $this->environment = $environment;
     }
 }

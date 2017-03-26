@@ -15,9 +15,10 @@ abstract class BaseConfiguration
 
     /**
      * @param $key
+     * @param $default
      * @return mixed
      */
-    abstract public function get($key);
+    abstract public function get($key, $default = null);
 
     /**
      * @param $filePath

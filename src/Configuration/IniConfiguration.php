@@ -14,6 +14,7 @@ class IniConfiguration extends BaseConfiguration
 
     /**
      * @param $confString
+     * @return mixed|void
      */
     protected function parse($confString)
     {
@@ -22,14 +23,15 @@ class IniConfiguration extends BaseConfiguration
 
     /**
      * @param $key
+     * @param null $default
      * @return mixed
      */
-    public function get($key)
+    public function get($key, $default = null)
     {
-        $parts = explode('.', $key);
+        $parts = explode('.', $key, 1);
         if (count($parts) === 1) {
-            return $this->ini[$parts[0]];
+            return $this->ini[$parts[0]] ?? $default;
         }
-        return $this->ini[$parts[0]][$parts[1]];
+        return $this->ini[$parts[0]][$parts[1]] ?? $default;
     }
 }

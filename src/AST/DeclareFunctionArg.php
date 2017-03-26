@@ -41,9 +41,9 @@ class DeclareFunctionArg extends ASTNode
     }
 
     /**
-     * @return Token
+     * @return Token|null
      */
-    public function getValue(): Token
+    public function getValue()
     {
         return $this->value;
     }

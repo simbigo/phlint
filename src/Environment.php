@@ -2,8 +2,8 @@
 
 namespace Simbigo\Phlint;
 
-use Simbigo\Phlint\AST\VariableAccessor;
 use Simbigo\Phlint\Core\IFunction;
+use Simbigo\Phlint\Exceptions\UndefinedFunction;
 use Simbigo\Phlint\Exceptions\UndefinedVariable;
 
 /**
@@ -53,21 +53,43 @@ class Environment
     }
 
     /**
-     * @param VariableAccessor $variable
-     * @return mixed
-     * @throws UndefinedVariable
+     * @param string $function
+     * @return IFunction
+     * @throws UndefinedFunction
      */
-    public function getVariable(VariableAccessor $variable)
+    public function getFunction($function)
     {
-        $name = $variable->getVariable()->getValue();
-        if (array_key_exists($name, $this->variablesMap)) {
-            return $this->variablesMap[$name];
+        if (array_key_exists($function, $this->functionsMap)) {
+            return $this->functionsMap[$function];
         }
 
         if ($this->parentEnvironment !== null) {
-            return $this->parentEnvironment->getVariable($variable);
+            return $this->parentEnvironment->getFunction($function);
         }
 
-        throw new UndefinedVariable($variable->getVariable());
+        throw new UndefinedFunction($function);
+    }
+
+    /**
+     * @param string $variable
+     * @return mixed
+     * @throws UndefinedVariable
+     */
+    public function getVariable(string $variable)
+    {
+        if (array_key_exists($variable, $this->variablesMap)) {
+            return $this->variablesMap[$variable];
+        }
+
+        /*if ($this->parentEnvironment !== null) {
+            return $this->parentEnvironment->getVariable($variable);
+        }*/
+
+        throw new UndefinedVariable($variable);
+    }
+
+    public function createLocalEnvironment()
+    {
+        return new static($this);
     }
 }

@@ -2,39 +2,53 @@
 
 namespace Simbigo\Phlint\Core;
 
-abstract class PhlintFunction
+use Simbigo\Phlint\Configuration\BaseConfiguration;
+
+/**
+ * Class PhlintFunction
+ */
+abstract class PhlintFunction implements IFunction
 {
+    /**
+     * @var array
+     */
     private $arguments = [];
 
-    public function __construct()
+    /**
+     * PhlintFunction constructor.
+     *
+     * @param BaseConfiguration $configuration
+     */
+    public function __construct(BaseConfiguration $configuration)
     {
-        $this->init();
+        $this->init($configuration);
     }
 
-    protected function defineArgument($name, $required = true, $default = null)
+    /**
+     * @param BaseConfiguration $configuration
+     */
+    protected function init(BaseConfiguration $configuration)
     {
-        $argument = new PhlintFunctionArgument($name, $required);
-        $argument->setDefault($default);
-        $this->arguments[$name] = $argument;
-        return $argument;
+
     }
 
-    protected function getArgument($name)
+    /**
+     * @param $name
+     * @param bool $required
+     * @param null $default
+     */
+    public function defineArgument($name, $required = true, $default = null)
     {
-        return $this->arguments[$name];
+        $this->arguments[] = $required ? [$name] : [$name, $default];
     }
 
+    /**
+     * @return array
+     */
     public function getDefinedArguments()
     {
         return $this->arguments;
     }
 
-    protected function init()
-    {
 
-    }
-
-    abstract public function call($arguments, $namedArguments);
-
-    abstract public function getName();
 }

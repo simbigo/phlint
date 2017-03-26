@@ -33,15 +33,6 @@ class Parser
      * @var Token[]
      */
     private $tokens;
-    /**
-     * @var
-     */
-    private $verbose;
-
-    public function __construct($verbose)
-    {
-        $this->verbose = $verbose;
-    }
 
     /**
      * @return ClassDefinition
@@ -57,6 +48,9 @@ class Parser
         return new ClassDefinition($token);
     }
 
+    /**
+     * @return Number|ASTFunction|BinaryOperation|VariableAccessor
+     */
     private function declaration()
     {
         if ($this->token->is(TokenType::T_KEYWORD_FUNC)) {
@@ -156,6 +150,9 @@ class Parser
         return new ASTFunction($token, ASTFunction::ACTION_CALL, $arguments);
     }
 
+    /**
+     * @return ASTFunction
+     */
     private function functionDeclaration()
     {
         $this->pickup(TokenType::T_KEYWORD_FUNC);
@@ -180,8 +177,12 @@ class Parser
         $this->pickup(TokenType::T_RIGHT_PARENTHESIS);
         $this->pickup(TokenType::T_SET_EQUALS);
         $this->pickup(TokenType::T_LEFT_BRACE);
+        $statements = [];
+        while (!$this->token->is(TokenType::T_RIGHT_BRACE)) {
+            $statements[] = $this->declaration();
+        }
         $this->pickup(TokenType::T_RIGHT_BRACE);
-        return new ASTFunction($nameToken, ASTFunction::ACTION_DECLARE, $arguments);
+        return new ASTFunction($nameToken, ASTFunction::ACTION_DECLARE, $arguments, $statements);
     }
 
     /**
@@ -313,6 +314,9 @@ class Parser
         return $node;
     }
 
+    /**
+     * @return Number|BinaryOperation
+     */
     private function statementExpression()
     {
         $expression = $this->expression();
@@ -339,6 +343,9 @@ class Parser
         return $node;
     }
 
+    /**
+     * @return VariableAccessor
+     */
     private function varDeclaration()
     {
         $variable = $this->token;

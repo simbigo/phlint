@@ -5,11 +5,9 @@ namespace Simbigo\Phlint;
 use Exception;
 use Simbigo\Phlint\Configuration\BaseConfiguration;
 use Simbigo\Phlint\Core\IPhlintExtension;
-use Simbigo\Phlint\Core\PrintPhlintFunction;
 use Simbigo\Phlint\Exceptions\ParseError;
 use Simbigo\Phlint\Exceptions\SyntaxError;
 use Simbigo\Phlint\Tokens\Token;
-use Simbigo\Phlint\Tokens\TokenType;
 
 /**
  * Class Phlint
@@ -21,9 +19,21 @@ class Phlint
      */
     private $configuration;
     /**
+     * @var bool
+     */
+    private $dumpTokens = false;
+    /**
+     * @var Environment
+     */
+    private $environment;
+    /**
      * @var array
      */
     private $exitCommands = ['exit', 'quit'];
+    /**
+     * @var IPhlintExtension[]
+     */
+    private $extensions = [];
     /**
      * @var Lexer
      */
@@ -36,13 +46,6 @@ class Phlint
      * @var string
      */
     private $prompt = '[phlint]: ';
-    /**
-     * @var IPhlintExtension[]
-     */
-    private $extensions = [];
-
-    private $dumpTokens = false;
-
 
     /**
      * Phlint constructor.
@@ -51,19 +54,20 @@ class Phlint
      * @param Interpreter $interpreter
      * @param Parser $parser
      * @param Lexer $lexer
+     * @param Environment $environment
      */
     public function __construct(
         BaseConfiguration $configuration,
         Interpreter $interpreter,
         Parser $parser,
-        Lexer $lexer
+        Lexer $lexer,
+        Environment $environment
     ) {
-        mb_internal_encoding('UTF-8');
-
         $this->interpreter = $interpreter;
         $this->parser = $parser;
         $this->lexer = $lexer;
         $this->configuration = $configuration;
+        $this->environment = $environment;
         $this->configure();
     }
 
@@ -72,26 +76,30 @@ class Phlint
      */
     private function configure()
     {
+        mb_internal_encoding('UTF-8');
         $this->loadExtensions();
-    }
-
-    private function loadExtensions()
-    {
-        $extensions = $this->configuration->get('extensions');
-        foreach ($extensions as $extensionName => $extensionClass) {
-            $this->loadExtension($extensionName, $extensionClass);
-        }
     }
 
     /**
      * @param string $name
      * @param string|IPhlintExtension $extension
      */
-    public function loadExtension($name, $extension)
+    private function loadExtension($name, $extension)
     {
         $extensionInstance = is_string($extension) ? new $extension() : $extension;
         $this->extensions[$name] = $extensionInstance;
-        $extensionInstance->load($this->interpreter);
+        $extensionInstance->load($this->interpreter, $this->environment, $this->configuration);
+    }
+
+    /**
+     *
+     */
+    private function loadExtensions()
+    {
+        $extensions = $this->configuration->get('extensions');
+        foreach ($extensions as $extensionName => $extensionClass) {
+            $this->loadExtension($extensionName, $extensionClass);
+        }
     }
 
     /**
@@ -106,6 +114,8 @@ class Phlint
     /**
      * @param $arguments
      * @return int|string
+     *
+     * @todo refactoring to use run options
      */
     public function run($arguments)
     {
@@ -135,10 +145,11 @@ class Phlint
         try {
             $tokens = $this->lexer->tokenize($source);
             if ($this->dumpTokens) {
-                $this->dumpTokens($tokens); exit;
+                $this->dumpTokens($tokens);
+                exit;
             }
             $statements = $this->parser->parse($tokens);
-            $this->interpreter->evaluate($statements);
+            $this->interpreter->evaluate($this->environment, $statements);
         } catch (Exception $e) {
             if ($e instanceof ParseError || $e instanceof SyntaxError) {
                 echo $e->getMessage() . PHP_EOL;
