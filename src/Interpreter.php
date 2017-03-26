@@ -5,6 +5,7 @@ namespace Simbigo\Phlint;
 use Simbigo\Phlint\AST\ASTFunction;
 use Simbigo\Phlint\AST\ASTNode;
 use Simbigo\Phlint\AST\BinaryOperation;
+use Simbigo\Phlint\AST\CallFunctionArg;
 use Simbigo\Phlint\AST\ClassDefinition;
 use Simbigo\Phlint\AST\Number;
 use Simbigo\Phlint\AST\VariableAccessor;
@@ -68,7 +69,18 @@ class Interpreter
         if (!array_key_exists($functionName, $this->functionMap)) {
             throw new SyntaxError('Undefined function "' . $functionName . '"');
         }
-        return $this->functionMap[$functionName]->call($this->visitNode($node->getArgument()));
+        $arguments = [];
+        $named = [];
+        foreach ($node->getArguments() as $argument) {
+            $name = $argument->getName();
+            $argumentValue = $this->visitNode($argument);
+            if ($name === null) {
+                $arguments[] = $argumentValue;
+            } else {
+                $named[$name->getValue()] = $argumentValue;
+            }
+        }
+        return $this->functionMap[$functionName]->call($arguments, $named);
     }
 
     /**
@@ -88,6 +100,8 @@ class Interpreter
             return $this->visitFunctionNode($node);
         } elseif ($node instanceof ClassDefinition) {
             return $this->visitClassDefinitionNode($node);
+        } elseif ($node instanceof CallFunctionArg) {
+            return $this->visitCallFunctionArgNode($node);
         }
 
         throw new InternalError('Unknown node type: ' . get_class($node));
@@ -105,6 +119,11 @@ class Interpreter
     private function visitNumberNode(Number $node)
     {
         return $node->getValue()->getValue();
+    }
+
+    private function visitCallFunctionArgNode(CallFunctionArg $argument)
+    {
+        return $this->visitNode($argument->getValue());
     }
 
     /**

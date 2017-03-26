@@ -26,7 +26,7 @@ Hello
 program                  = (declaration | class_declaration)*
                           
 declaration              = statement
-                         | var_declaration 
+                         | variable_declaration 
                          | function_declaration 
       
 statement                = statement_expr
@@ -52,7 +52,7 @@ arguments                = argument ("," argument)*
 argument                 = expression
 
 statement_expr           = expression ";"
-expression               = term (plus_minus term)*
+expression               = (term | variable | function) (plus_minus (term | variable | function))*
 term                     = factor (mul_div factor)*
 factor                   = number | expression 
 

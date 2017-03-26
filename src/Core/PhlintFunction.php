@@ -6,9 +6,15 @@ abstract class PhlintFunction
 {
     private $arguments = [];
 
-    protected function createArgument($name)
+    public function __construct()
     {
-        $argument = new PhlintFunctionArgument($name);
+        $this->init();
+    }
+
+    protected function defineArgument($name, $required = true, $default = null)
+    {
+        $argument = new PhlintFunctionArgument($name, $required);
+        $argument->setDefault($default);
         $this->arguments[$name] = $argument;
         return $argument;
     }
@@ -18,12 +24,17 @@ abstract class PhlintFunction
         return $this->arguments[$name];
     }
 
-    protected function getDefinedArguments()
+    public function getDefinedArguments()
     {
         return $this->arguments;
     }
 
-    abstract public function call($arguments);
+    protected function init()
+    {
+
+    }
+
+    abstract public function call($arguments, $namedArguments);
 
     abstract public function getName();
 }

@@ -11,9 +11,11 @@ class PrintPhlintFunction extends PhlintFunction
         return 'print';
     }
 
-    public function call($arguments)
+    public function call($arguments, $namedArguments)
     {
-        call_user_func_array('printf', [$arguments]);
-        echo "\n";
+        foreach ($arguments as $argument) {
+            call_user_func('printf', $argument);
+            echo "\n";
+        }
     }
 }

@@ -7,7 +7,7 @@ use Simbigo\Phlint\Tokens\Token;
 /**
  * Class FunctionArgument
  */
-class FunctionArgument
+class DeclareFunctionArg extends ASTNode
 {
 
     /**

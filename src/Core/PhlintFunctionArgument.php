@@ -16,6 +16,10 @@ class PhlintFunctionArgument
      */
     private $name;
     /**
+     * @var bool
+     */
+    private $required;
+    /**
      * @var
      */
     private $value;
@@ -24,10 +28,20 @@ class PhlintFunctionArgument
      * PhlintFunctionArgument constructor.
      *
      * @param $name
+     * @param bool $required
      */
-    public function __construct($name)
+    public function __construct($name, $required = true)
     {
         $this->name = $name;
+        $this->required = $required;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getName()
+    {
+        return $this->name;
     }
 
     /**
@@ -47,6 +61,22 @@ class PhlintFunctionArgument
     }
 
     /**
+     * @return bool
+     */
+    public function isDefault(): bool
+    {
+        return $this->default;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRequired(): bool
+    {
+        return $this->required;
+    }
+
+    /**
      * @param $value
      * @return $this
      */
@@ -55,5 +85,13 @@ class PhlintFunctionArgument
         $this->default = true;
         $this->value = $value;
         return $this;
+    }
+
+    /**
+     * @param mixed $value
+     */
+    public function setValue($value)
+    {
+        $this->value = $value;
     }
 }

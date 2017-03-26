@@ -1,3 +1,2 @@
-func name(first, second, third = 1) = {
-
-}
+var = 2 + 3;
+print(3 + 4, 6 * 3, var);

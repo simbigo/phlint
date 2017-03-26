@@ -21,9 +21,9 @@ class ASTFunction extends ASTNode
         return $this->action;
     }
     /**
-     * @var ASTNode
+     * @var DeclareFunctionArg[]|CallFunctionArg[]
      */
-    private $argument;
+    private $arguments;
     /**
      * @var Token
      */
@@ -33,22 +33,22 @@ class ASTFunction extends ASTNode
      * VariableAccessor constructor.
      *
      * @param Token $functionName
-     * @param ASTNode $argument
+     * @param ASTNode[] $arguments
      * @param string $action
      */
-    public function __construct(Token $functionName, $action = self::ACTION_CALL, ASTNode $argument = null)
+    public function __construct(Token $functionName, $action = self::ACTION_CALL, array $arguments = null)
     {
         $this->function = $functionName;
-        $this->argument = $argument;
+        $this->arguments = $arguments;
         $this->action = $action;
     }
 
     /**
-     * @return ASTNode
+     * @return DeclareFunctionArg[]|CallFunctionArg[]
      */
-    public function getArgument(): ASTNode
+    public function getArguments(): array
     {
-        return $this->argument;
+        return $this->arguments;
     }
 
     /**

@@ -5,8 +5,9 @@ namespace Simbigo\Phlint;
 use Simbigo\Phlint\AST\ASTFunction;
 use Simbigo\Phlint\AST\ASTNull;
 use Simbigo\Phlint\AST\BinaryOperation;
+use Simbigo\Phlint\AST\CallFunctionArg;
 use Simbigo\Phlint\AST\ClassDefinition;
-use Simbigo\Phlint\AST\FunctionArgument;
+use Simbigo\Phlint\AST\DeclareFunctionArg;
 use Simbigo\Phlint\AST\FunctionCall;
 use Simbigo\Phlint\AST\IfCondition;
 use Simbigo\Phlint\AST\Number;
@@ -47,39 +48,6 @@ class Parser
         return new ClassDefinition($token);
     }
 
-    private function functionDeclaration()
-    {
-        $this->pickup(TokenType::T_KEYWORD_FUNC);
-        $nameToken = $this->token;
-        $this->pickup(TokenType::T_IDENTIFIER);
-        $this->pickup(TokenType::T_LEFT_PARENTHESIS);
-        $arguments = [];
-        while ($this->token->getType() !== TokenType::T_RIGHT_PARENTHESIS) {
-            $argumentName = $this->token;
-            $this->pickup(TokenType::T_IDENTIFIER);
-            $defaultValue = null;
-            if ($this->token->is(TokenType::T_SET_EQUALS)) {
-                $this->pickup(TokenType::T_SET_EQUALS);
-                $defaultValue = $this->token;
-                $this->pickup(TokenType::T_NUMBER); // todo allow other types
-            }
-            $arguments[] = new FunctionArgument($argumentName, $defaultValue);
-            if ($this->token->getType() !== TokenType::T_RIGHT_PARENTHESIS) {
-                $this->pickup(TokenType::T_COMA);
-            }
-        }
-        $this->pickup(TokenType::T_RIGHT_PARENTHESIS);
-        $this->pickup(TokenType::T_SET_EQUALS);
-        $this->pickup(TokenType::T_LEFT_BRACE);
-        $this->pickup(TokenType::T_RIGHT_BRACE);
-        return new ASTFunction($nameToken, ASTFunction::ACTION_DECLARE);
-    }
-
-    private function varDeclaration()
-    {
-
-    }
-
     private function declaration()
     {
         if ($this->token->is(TokenType::T_KEYWORD_FUNC)) {
@@ -88,7 +56,7 @@ class Parser
             return $this->varDeclaration();
         }
 
-        return $this->statement();
+        return $this->statementExpression();
     }
 
     /**
@@ -96,7 +64,17 @@ class Parser
      */
     private function expression()
     {
-        $node = $this->term();
+        if ($this->token->is(TokenType::T_IDENTIFIER)) {
+            $token = $this->token;
+            if ($this->seeNext()->is(TokenType::T_LEFT_PARENTHESIS)) {
+                $node = $this->functionCall();
+            } else {
+                $this->pickup(TokenType::T_IDENTIFIER);
+                $node = new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
+            }
+        } else {
+            $node = $this->term();
+        }
 
         while ($this->token->isIn([TokenType::T_PLUS, TokenType::T_MINUS])) {
             $token = $this->token;
@@ -113,7 +91,7 @@ class Parser
     }
 
     /**
-     * @return BinaryOperation|\Simbigo\Phlint\AST\Number|VariableAccessor|FunctionCall
+     * @return BinaryOperation|\Simbigo\Phlint\AST\Number|VariableAccessor|ASTFunction
      */
     private function factor()
     {
@@ -126,32 +104,66 @@ class Parser
             $node = $this->expression();
             $this->pickup(TokenType::T_RIGHT_PARENTHESIS);
             return $node;
-        } elseif ($token->is(TokenType::T_IDENTIFIER)) {
-            $this->pickup(TokenType::T_IDENTIFIER);
-            return new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
-        } elseif ($token->is(TokenType::T_IDENTIFIER)) {
-            if ($this->seeNext()->is(TokenType::T_LEFT_PARENTHESIS)) {
-                return $this->functionCall();
-            } else {
-                $this->pickup(TokenType::T_IDENTIFIER);
-                return new VariableAccessor($token, new ASTNull(), VariableAccessor::ACTION_GET);
-            }
         }
 
         return null;
     }
 
     /**
-     * @return FunctionCall
+     * @return ASTFunction
      */
     private function functionCall()
     {
         $token = $this->token;
         $this->pickup(TokenType::T_IDENTIFIER);
         $this->pickup(TokenType::T_LEFT_PARENTHESIS);
-        $node = $this->expression();
+        $arguments = [];
+        while ($this->token->getType() !== TokenType::T_RIGHT_PARENTHESIS) {
+            if ($this->token->is(TokenType::T_IDENTIFIER) && $this->seeNext()->is(TokenType::T_SET_EQUALS)) {
+                $argumentName = $this->token;
+                $this->pickup(TokenType::T_IDENTIFIER);
+                $this->pickup(TokenType::T_SET_EQUALS);
+            } else {
+                $argumentName = null;
+            }
+
+            $argumentValue = $this->expression();
+            $arguments[] = new CallFunctionArg($argumentName, $argumentValue);
+
+            if ($this->token->getType() !== TokenType::T_RIGHT_PARENTHESIS) {
+                $this->pickup(TokenType::T_COMA);
+            }
+        }
         $this->pickup(TokenType::T_RIGHT_PARENTHESIS);
-        return new FunctionCall($token, $node);
+        return new ASTFunction($token, ASTFunction::ACTION_CALL, $arguments);
+    }
+
+    private function functionDeclaration()
+    {
+        $this->pickup(TokenType::T_KEYWORD_FUNC);
+        $nameToken = $this->token;
+        $this->pickup(TokenType::T_IDENTIFIER);
+        $this->pickup(TokenType::T_LEFT_PARENTHESIS);
+        $arguments = [];
+        while ($this->token->getType() !== TokenType::T_RIGHT_PARENTHESIS) {
+            $argumentName = $this->token;
+            $this->pickup(TokenType::T_IDENTIFIER);
+            $defaultValue = null;
+            if ($this->token->is(TokenType::T_SET_EQUALS)) {
+                $this->pickup(TokenType::T_SET_EQUALS);
+                $defaultValue = $this->token;
+                $this->pickup(TokenType::T_NUMBER); // todo allow other types
+            }
+            $arguments[] = new DeclareFunctionArg($argumentName, $defaultValue);
+            if ($this->token->getType() !== TokenType::T_RIGHT_PARENTHESIS) {
+                $this->pickup(TokenType::T_COMA);
+            }
+        }
+        $this->pickup(TokenType::T_RIGHT_PARENTHESIS);
+        $this->pickup(TokenType::T_SET_EQUALS);
+        $this->pickup(TokenType::T_LEFT_BRACE);
+        $this->pickup(TokenType::T_RIGHT_BRACE);
+        return new ASTFunction($nameToken, ASTFunction::ACTION_DECLARE, $arguments);
     }
 
     /**
@@ -273,17 +285,6 @@ class Parser
     /**
      * @return VariableAccessor
      */
-    private function setter()
-    {
-        $token = $this->token;
-        $this->pickup(TokenType::T_IDENTIFIER);
-        $this->pickup(TokenType::T_SET_EQUALS);
-        return new VariableAccessor($token, $this->expression(), VariableAccessor::ACTION_SET);
-    }
-
-    /**
-     * @return VariableAccessor
-     */
     private function statement()
     {
         if ($this->seeNext()->is(TokenType::T_LEFT_PARENTHESIS)) {
@@ -311,6 +312,21 @@ class Parser
         }
 
         return $node;
+    }
+
+    private function varDeclaration()
+    {
+        $variable = $this->token;
+        $this->pickup(TokenType::T_IDENTIFIER);
+        $this->pickup(TokenType::T_SET_EQUALS);
+        return new VariableAccessor($variable, $this->statementExpression(), VariableAccessor::ACTION_SET);
+    }
+
+    private function statementExpression()
+    {
+        $expression = $this->expression();
+        $this->pickup(TokenType::T_SEMICOLON);
+        return $expression;
     }
 
     /**
