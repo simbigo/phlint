@@ -41,6 +41,8 @@ class Phlint
      */
     private $extensions = [];
 
+    private $dumpTokens = false;
+
 
     /**
      * Phlint constructor.
@@ -112,6 +114,9 @@ class Phlint
             if ($arguments[0] === '-c') {
                 $code = $arguments[1] ?? '';
                 $exitCode = $this->runCode($code);
+            } elseif ($arguments[0] === '-t') {
+                $this->dumpTokens = $arguments[1];
+                $exitCode = $this->runFile($arguments[2]);
             } else {
                 $exitCode = $this->runFile($arguments[0]);
             }
@@ -130,7 +135,9 @@ class Phlint
     {
         try {
             $tokens = $this->lexer->tokenize($source);
-            $this->dumpTokens($tokens); exit;
+            if ($this->dumpTokens) {
+                $this->dumpTokens($tokens); exit;
+            }
             $statements = $this->parser->parse($tokens);
             $this->interpreter->evaluate($statements);
         } catch (Exception $e) {
